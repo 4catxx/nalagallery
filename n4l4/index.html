@@ -40,23 +40,26 @@
       <div class="panel-body">
         <div id="gate" class="login-gate" role="region" aria-label="Gerbang login admin">
           <form id="gateForm" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center">
+            <label class="sr-only" for="gateEmail">Email</label>
+            <input id="gateEmail" type="email" placeholder="Email Nalania" autocomplete="email" required style="padding:12px 13px;border-radius:999px;border:1.5px solid var(--ink);min-width:240px;box-shadow:0 2px 0 var(--ink)">
             <label class="sr-only" for="gatePass">Password</label>
-            <input id="gatePass" type="password" placeholder="Password" autocomplete="off" style="padding:12px 13px;border-radius:999px;border:1.5px solid var(--ink);min-width:240px;box-shadow:0 2px 0 var(--ink)">
-            <button class="btn primary" type="submit">Buka antrean, Roar!</button>
+            <input id="gatePass" type="password" placeholder="Password" autocomplete="current-password" required style="padding:12px 13px;border-radius:999px;border:1.5px solid var(--ink);min-width:240px;box-shadow:0 2px 0 var(--ink)">
+            <button class="btn primary" type="submit">Masuk, Roar!</button>
           </form>
-          <small id="gateError" class="error" role="alert" hidden style="color:var(--field);font-weight:800">Ups, password salah — coba lagi ya!</small>
+          <small id="gateError" class="error" role="alert" hidden style="color:var(--field);font-weight:800">Ups, email atau password salah — coba lagi ya!</small>
         </div>
 
         <div id="queueWrap" hidden>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <span class="status" id="pendingCount">3 menunggu</span>
+              <span class="status" id="pendingCount">0 menunggu</span>
               <span class="status" style="background:var(--paper)">Disetujui: <b id="approvedCount">0</b></span>
               <span class="status" style="background:var(--paper)">Ditolak: <b id="rejectedCount">0</b></span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn small" id="refreshPublic" type="button">Muat ulang</button>
               <button class="btn small" id="resetQueue" type="button">Reset demo lagi yuk</button>
+              <button class="btn small" id="logoutBtn" type="button" style="border-color:var(--field);color:var(--field)">Keluar</button>
             </div>
           </div>
           <div id="reportsPanel" style="margin-bottom:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2);display:none">
@@ -82,8 +85,9 @@
 </footer>
 
 <script>
+const SUPABASE_URL = "https://giaoisdecffzmeoixxzs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpYW9pc2RlY2Zmem1lb2l4eHpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTY3MzksImV4cCI6MjEwNDA5MjczOX0.uw6UBD0W4ieQYObgEA5G2u7HhzouSLHO4Eql9KhgmSQ";
 // MODEL parity: photos gain `photos` array (tweet-as-unit); single-photo logic keeps working with 1-entry arrays.
-// Real data R1-R3 knowledge remains DOCUMENTED elsewhere; in-code collection is now empty to show only real photos (none supplied yet ? honest empty state).
 const photos = [];
 // FRAME_VARIANTS_STABLE_RANDOM: 5 variants — frame-teal (teal penuh honor), frame-ink, frame-mat, frame-lime, frame-wash — existing tokens only — hash(tweet id + pid) stable; Nala_JKT48 always frame-teal
 const FRAME_VARIANTS = ["frame-teal","frame-ink","frame-mat","frame-lime","frame-wash"];
@@ -104,29 +108,22 @@ function getHandleForItem(item){
 }
 let pending = [];
 let approvedCount = 0, rejectedCount = 0;
-const SUBMISSIONS_KEY="nala-submissions";
-function loadPublicSubmissions(){ try{ const raw=localStorage.getItem(SUBMISSIONS_KEY); return raw?JSON.parse(raw):[]; }catch(e){ return []; } }
-function isUrlInQueueOrGallery(url){ const n=String(url).trim(); return photos.some(p=>p.tweetUrl===n) || pending.some(p=>p.tweetUrl===n); }
-function mergePublicSubmissions(){
-  try{
-    const stored=loadPublicSubmissions();
-    if(!Array.isArray(stored) || !stored.length) return 0;
-    let added=0;
-    stored.forEach(entry=>{
-      const url=String(entry.tweetUrl||"").trim();
-      if(!url) return;
-      if(isUrlInQueueOrGallery(url)) return;
-      const handle=entry.handle || (function(u){ const m=String(u).match(/^(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/([^\/]+)\/status\/\d+/i); return m?m[1]:""; })(url);
-      const id=`pub-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
-      pending.unshift({id, photographer: handle?`@${handle}`:`@kamu (pengirim)`, caption:"dari form publik — menunggu kurasi.", tweetUrl:url, era:"Era 2024", photos:[{pid:id}], fromPublic:true, submittedAt: entry.submittedAt || new Date().toISOString()});
-      added++;
-    });
-    if(added) renderQueue();
-    return added;
-  }catch(e){ return 0; }
-}
+let accessToken = null;
+try{ accessToken = sessionStorage.getItem("nala-admin-token"); }catch(e){}
 const $ = s=>document.querySelector(s);
 const esc = s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function showToast(msg, isAccent){
+  const t=document.createElement("div");
+  t.textContent=msg;
+  t.className="ceria-toast";
+  t.style.cssText=`position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:${isAccent?`var(--accent)`:`var(--ink)`};color:${isAccent?`var(--ink)`:`var(--paper)`};border:1.5px solid var(--ink);padding:10px 14px;border-radius:999px;font-weight:900;font-size:12px;z-index:90;box-shadow:var(--shadow-card)`;
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2200);
+}
+function authHeaders(){
+  const h={ apikey: SUPABASE_ANON_KEY, Accept:"application/json" };
+  if(accessToken) h.Authorization = `Bearer ${accessToken}`;
+  return h;
+}
 function tweetSvgSmall(){
   return `<svg viewBox="0 0 640 360" role="img" aria-label="pratinjau tweet sintetis"><rect width="640" height="360" rx="14" fill="#FFFBF2"/><rect x="14" y="14" width="612" height="332" rx="12" fill="none" stroke="#E8DDD3"/><circle cx="48" cy="48" r="18" fill="#0F0F0E"/><rect x="76" y="30" width="140" height="10" rx="5" fill="#0F0F0E" opacity=".9"/><rect x="76" y="46" width="90" height="8" rx="4" fill="#6B625C" opacity=".45"/><rect x="22" y="78" width="596" height="10" rx="5" fill="#0F0F0E" opacity=".12"/><rect x="22" y="96" width="520" height="10" rx="5" fill="#0F0F0E" opacity=".12"/><rect x="22" y="114" width="560" height="10" rx="5" fill="#0F0F0E" opacity=".08"/><rect x="22" y="150" width="596" height="168" rx="10" fill="#F2E9DE" stroke="#E8DDD3"/><text x="320" y="244" text-anchor="middle" font-size="11" font-weight="900" letter-spacing=".12em" fill="#6B625C">SINTETIS PREVIEW</text></svg>`;
 }
@@ -136,7 +133,6 @@ function tweetSvgThumb(label){
   const vb = isLandscape ? "0 0 200 112" : isPortrait ? "0 0 112 200" : "0 0 200 160";
   const w = vb.split(" ")[2], h = vb.split(" ")[3];
   const cx = Math.round(parseInt(w)/2), cy = isPortrait ? 70 : isLandscape ? 56 : 68;
-  // quiet thumbnail for queue 3-photo strip — existing tokens only — cover slice shows grid tidy, viewer would be meet
   return `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(label)} — SINTETIS thumb"><rect width="${w}" height="${h}" rx="10" fill="#F2E9DE" stroke="#E8DDD3"/><rect x="8" y="8" width="${parseInt(w)-16}" height="${parseInt(h)-42}" rx="8" fill="#FFFBF2" stroke="#E8DDD3"/><text x="${cx}" y="${cy}" text-anchor="middle" font-size="7" font-weight="900" letter-spacing=".08em" fill="#6B625C">SINTETIS</text><text x="${cx}" y="${parseInt(h)-14}" text-anchor="middle" font-size="6.5" font-weight="800" letter-spacing=".06em" fill="#0F0F0E">${esc(label)}</text></svg>`;
 }
 function queueMediaHtml(item){
@@ -154,30 +150,82 @@ function queueMediaHtml(item){
   }).join("");
   return `<div class="tweet-media" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${thumbs}</div><small style="color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase">${n} foto dalam 1 tweet — SINTETIS</small></div>`;
 }
-const REPORTS_KEY="nala-reports";
-function loadReports(){ try{ return JSON.parse(localStorage.getItem(REPORTS_KEY)||"{}"); }catch(e){ return {}; } }
-function renderReports(){
+function mapPendingRow(row){
+  const handleClean = String(row.handle||"").replace(/^@/,"");
+  const authorName = row.author || (handleClean ? `@${handleClean}` : "@anon");
+  const photosArr = Array.isArray(row.photos) ? row.photos.slice().sort((a,b)=>(a.position||0)-(b.position||0)).map(ph=>({
+    pid: String(ph.id || `${row.id}-${ph.position||1}`),
+    label: `Foto ${ph.position||1}`,
+    image_url_large: ph.image_url_large||"",
+    image_url_orig: ph.image_url_orig||""
+  })) : [{pid: String(row.id)}];
+  return {
+    id: String(row.id),
+    photographer: authorName,
+    handle: handleClean,
+    caption: row.caption||"dari form publik — menunggu kurasi.",
+    tweetUrl: row.url,
+    era: row.tweet_date ? `Era ${new Date(row.tweet_date).getFullYear()}` : "Era —",
+    photos: photosArr,
+    created_at: row.created_at,
+    status: row.status
+  };
+}
+async function fetchPending(){
+  const q=$("#queue");
+  if(q) q.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-weight:700;font-size:12px">Memuat antrean, semangat! \u00b7 Loading queue</div>`;
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.pending&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    pending = (rows||[]).map(mapPendingRow);
+    renderQueue();
+    fetchReports();
+  }catch(err){
+    console.error("[Nala Admin] gagal memuat antrean", err);
+    if(q) q.innerHTML=`<div class="empty"><b>Hai-hai, belum bisa muat antrean — cek koneksi ya!</b><span style="font-size:11px;letter-spacing:.04em;color:var(--muted)">tidak bisa memuat antrean, cek koneksi</span></div>`;
+    showToast("Hai-hai, antreannya belum kekirim — cek koneksi ya, coba lagi!", false);
+  }
+}
+async function fetchReports(){
   const panel=$("#reportsPanel");
   const list=$("#reportsList");
   if(!panel||!list) return;
-  const reports=loadReports();
-  const ids=Object.keys(reports).filter(id=>reports[id]>0);
-  if(!ids.length){
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?select=*,tweets(author,handle,url)`, { headers: authHeaders() });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    if(!rows || rows.length===0){
+      panel.style.display="none";
+      return;
+    }
+    const counts={};
+    rows.forEach(r=>{
+      const tid=String(r.tweet_id||r.tweetId||"");
+      if(tid) counts[tid]=(counts[tid]||0)+1;
+    });
+    const ids=Object.keys(counts);
+    if(!ids.length){ panel.style.display="none"; return; }
+    panel.style.display="block";
+    list.innerHTML="";
+    ids.forEach(id=>{
+      const sample=rows.find(r=>String(r.tweet_id)===id);
+      const tweetInfo = sample && sample.tweets ? sample.tweets : { author:"@anon", handle:"anon", url:"" };
+      const count=counts[id];
+      const row=document.createElement("div");
+      row.className="notice";
+      row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
+      const authorEsc = esc(tweetInfo.author||`@${tweetInfo.handle}`);
+      const urlEsc = esc(tweetInfo.url||`tweet ${id}`);
+      const handleEsc = esc(tweetInfo.handle||"");
+      row.innerHTML=`<span><b>${authorEsc} @${handleEsc}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Dilaporkan · ${count}</span><br><span style="word-break:break-all;color:var(--muted)">${urlEsc}</span></span><span class="reported-flag">Dilaporkan</span>`;
+      list.appendChild(row);
+    });
+  }catch(err){
+    console.error("[Nala Admin] gagal memuat laporan", err);
     panel.style.display="none";
-    return;
+    showToast("Hai-hai, laporannya belum kekirim — cek koneksi ya!", false);
   }
-  panel.style.display="block";
-  list.innerHTML="";
-  ids.forEach(id=>{
-    const p=photos.find(x=>String(x.id)===String(id));
-    if(!p) return;
-    const count=reports[id];
-    const row=document.createElement("div");
-    row.className="notice";
-    row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
-    row.innerHTML=`<span><b>${esc(p.photographer)} @${esc(p.handle)}</b> — ${esc(p.curatedAt||"")} · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Dilaporkan · ${count}</span><br><span style="word-break:break-all;color:var(--muted)">${esc(p.tweetUrl)}</span></span><span class="reported-flag">Dilaporkan</span>`;
-    list.appendChild(row);
-  });
 }
 function renderQueue(){
   const q=$("#queue");
@@ -193,16 +241,16 @@ function renderQueue(){
         <div class="tweet-preview">
           <div class="tweet-head">
             <span class="avatar">${esc(item.photographer.slice(1,3).toUpperCase())}</span>
-            <div><b>${esc(item.photographer)}</b><br><span>${esc(item.era)} · SINTETIS</span></div>
+            <div><b>${esc(item.photographer)}</b><br><span>${esc(item.era)} · ${esc(item.status||"pending")}</span></div>
             <span class="status" style="margin-left:auto">Menunggu</span>
           </div>
-          <div class="tweet-text">${esc(item.caption)}<br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;word-break:break-all">${esc(item.tweetUrl)}</a>${item.fromPublic ? `<br><span class="meta-pill" style="background:var(--accent);border-color:var(--ink);margin-top:6px;display:inline-block">dari form publik</span>` : ``}</div>
+          <div class="tweet-text">${esc(item.caption)}<br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;word-break:break-all">${esc(item.tweetUrl)}</a></div>
           ${queueMediaHtml(item)}
-          <small style="color:var(--muted);font-weight:600">Pratinjau sintetis — demo card, Hai-hai!${item.photos && item.photos.length>1 ? ` — 3 foto dalam 1 tweet, Roar!` : ``}${item.fromPublic ? ` · <span style="color:var(--field);font-weight:800">dari form publik</span>` : ``}</small>
+          <small style="color:var(--muted);font-weight:600">Pratinjau — Hai-hai!${item.photos && item.photos.length>1 ? ` — ${item.photos.length} foto dalam 1 tweet, Roar!` : ``}</small>
         </div>
         <div class="tweet-actions">
           <b style="font-size:13px;letter-spacing:-.02em">Kurasi bareng Nalania</b>
-          <p style="margin:0;color:var(--muted);font-size:12px;font-weight:600;line-height:1.5">Klik Setujui biar terbit ke galeri (snapshot kredit disimpan rapi). Tolak buat hapus dari antrean ya.</p>
+          <p style="margin:0;color:var(--muted);font-size:12px;font-weight:600;line-height:1.5">Klik Setujui biar terbit ke galeri (snapshot kredit disimpan rapi). Tolak buat tandai ditolak ya.</p>
           <div class="row">
             <button class="btn accent" type="button" data-approve="${esc(item.id)}">Setujui</button>
             <button class="btn" type="button" data-reject="${esc(item.id)}" style="background:var(--paper)">Tolak</button>
@@ -216,66 +264,118 @@ function renderQueue(){
     q.querySelectorAll("[data-reject]").forEach(b=> b.addEventListener("click", ()=> reject(b.getAttribute("data-reject"))));
   }
   $("#pendingCount").textContent = `${pending.length} menunggu dikurasi, semangat!`;
+  // approved/rejected counts kept 0 for now — could fetch separate counts if needed
   $("#approvedCount").textContent = String(approvedCount);
   $("#rejectedCount").textContent = String(rejectedCount);
 }
-function approve(id){
-  const idx=pending.findIndex(p=>p.id===id);
-  if(idx<0) return;
-  const item=pending.splice(idx,1)[0];
-  approvedCount++;
-  renderQueue();
-  const t=document.createElement("div");
-  t.textContent=`Roar! Disetujui — ${item.photographer} (demo aja, belum nambah ke galeri utama di halaman ini ya)`;
-  t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--accent);color:var(--ink);border:1.5px solid var(--ink);padding:10px 14px;border-radius:999px;font-weight:900;font-size:12px;z-index:90;box-shadow:var(--shadow-card)";
-  document.body.appendChild(t); setTimeout(()=>t.remove(), 2200);
+async function approve(id){
+  const btn=document.querySelector(`[data-approve="${id}"]`);
+  if(btn){ btn.disabled=true; btn.textContent="Menyetujui..."; }
+  const today=new Date().toISOString().slice(0,10);
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
+      method:"PATCH",
+      headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=representation" },
+      body: JSON.stringify({ status:"approved", curated_at: today })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    pending = pending.filter(p=>p.id!==id);
+    approvedCount++;
+    renderQueue();
+    showToast(`Roar! Disetujui — tetap semangat!`, true);
+  }catch(err){
+    console.error("[Nala Admin] approve gagal", err);
+    showToast("Hai-hai, belum bisa menyetujui — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent="Setujui"; }
+  }
 }
-function reject(id){
-  const idx=pending.findIndex(p=>p.id===id);
-  if(idx<0) return;
-  pending.splice(idx,1);
-  rejectedCount++; renderQueue();
+async function reject(id){
+  const btn=document.querySelector(`[data-reject="${id}"]`);
+  if(btn){ btn.disabled=true; btn.textContent="Menolak..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
+      method:"PATCH",
+      headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=representation" },
+      body: JSON.stringify({ status:"rejected" })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    pending = pending.filter(p=>p.id!==id);
+    rejectedCount++;
+    renderQueue();
+    showToast("Sudah ditolak, makasih ya — tetap semangat!", false);
+  }catch(err){
+    console.error("[Nala Admin] reject gagal", err);
+    showToast("Hai-hai, belum bisa menolak — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent="Tolak"; }
+  }
 }
-$("#gateForm").addEventListener("submit",(e)=>{
+$("#gateForm").addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const v=$("#gatePass").value;
+  const emailEl=$("#gateEmail");
+  const passEl=$("#gatePass");
   const err=$("#gateError");
-  if(v==="nala-admin-demo"){
+  const email=emailEl.value.trim();
+  const password=passEl.value;
+  err.hidden=true;
+  const btn=e.target.querySelector('button[type="submit"]');
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Memeriksa, sebentar ya..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method:"POST",
+      headers:{ apikey: SUPABASE_ANON_KEY, "Content-Type":"application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    if(!data.access_token) throw new Error("no token");
+    accessToken=data.access_token;
+    try{ sessionStorage.setItem("nala-admin-token", accessToken); }catch(_){}
     err.hidden=true;
     $("#gate").hidden=true;
     $("#queueWrap").hidden=false;
-    mergePublicSubmissions();
-    renderQueue();
-    renderReports();
-  } else {
+    fetchPending();
+  }catch(err2){
+    console.error("[Nala Admin] login gagal", err2);
     err.hidden=false;
+    showToast("Hai-hai, email atau password belum cocok — coba lagi ya, semangat!", false);
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent=prevText||"Masuk, Roar!"; }
   }
 });
 $("#refreshPublic").addEventListener("click",()=>{
-  const added=mergePublicSubmissions();
-  if(added===0){
-    const t=document.createElement("div");
-    t.textContent="Tidak ada kiriman baru dari form publik, Roar!";
-    t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:10px 14px;border-radius:999px;font-size:12px;font-weight:700;z-index:90;";
-    document.body.appendChild(t); setTimeout(()=>t.remove(), 1800);
-  } else {
-    const t=document.createElement("div");
-    t.textContent=`${added} baru dari form publik dimuat, Roar!`;
-    t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--field);color:var(--paper);padding:10px 14px;border-radius:999px;font-size:12px;font-weight:800;z-index:90;border:1px solid var(--field-deep)";
-    document.body.appendChild(t); setTimeout(()=>t.remove(), 2000);
+  if(!accessToken){
+    showToast("Hai-hai, silakan login dulu ya!", false);
+    return;
   }
-});
-window.addEventListener("pageshow", ()=>{
-  if(!$("#queueWrap").hidden) mergePublicSubmissions();
-});
-document.addEventListener("visibilitychange", ()=>{
-  if(document.visibilityState==="visible" && !$("#queueWrap").hidden) mergePublicSubmissions();
+  fetchPending();
 });
 $("#resetQueue").addEventListener("click",()=>{
-   pending=[];
-  approvedCount=0; rejectedCount=0; renderQueue(); renderReports();
+  if(!accessToken){
+    showToast("Hai-hai, silakan login dulu ya!", false);
+    return;
+  }
+  fetchPending();
+  showToast("Muat ulang antrean, semangat!", true);
 });
-renderQueue(); renderReports();
+$("#logoutBtn").addEventListener("click",()=>{
+  accessToken=null;
+  try{ sessionStorage.removeItem("nala-admin-token"); }catch(_){}
+  pending=[];
+  $("#queueWrap").hidden=true;
+  $("#gate").hidden=false;
+  $("#gatePass").value="";
+  showToast("Sudah keluar, sampai jumpa lagi — Hai-hai!", false);
+});
+(function initAdmin(){
+  if(accessToken){
+    $("#gate").hidden=true;
+    $("#queueWrap").hidden=false;
+    fetchPending();
+  } else {
+    renderQueue();
+  }
+})();
 </script>
 </body>
 </html>

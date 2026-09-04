@@ -12,9 +12,9 @@
 <!--
 THESIS: Panggung, bukan penampil — web adalah panggung tenang yang membuat foto Nala lebih indah. Foto sebagai tuan rumah, frame menghilang. Ceria tetap kuat (Hai-hai!/Roar! & #SeniNala), gagah dijinakkan di sekitar foto, feminin & seni & pelukis & ghibli diperdalam dengan lembut. Teal tetap pemilik identitas; arsip pusat yang tepercaya.
 OWN-WORLD: Panggung hangat — paper #FFFBF2/sand menahan beban, teal #0E7C86 aksen ~10% (NALA 16vw, mane tipis, seal kecil, garis hairline), lime hanya focus ring + aksi utama. Grid ruang tenang (gap 28px, padding 24px, ground paper), kartu hairline, foto membesar. Surai radial teal di ground paper, tidak menutup foto. Feminin via selotip & wash, indah bukan ramai.
-STORY: Masuk — NALA teal di panggung paper, surai & wash hangat menyambut. Hai-hai! Arsip bernafas: toolbar dengan urut Terbaru/Terlama, grid + stats tepercaya & cahaya golden-hour di tepi & glow di balik Dari Nala; filter lipat, chip menyaring. Ketuk foto — viewer terang/gelap dual-ruang (toggle persisten) yang konsisten dengan urutan & halaman terlihat; ROAR! mini di segel unduh. Kredit serif miring memuliakan pembuat.
+STORY: Masuk — NALA teal di panggung paper, surai & wash hangat menyambut. Hai-hai! Arsip bernafas: toolbar dengan urut Terbaru/Terlama, grid + stats tepercaya & cahaya golden-hour di tepi & glow di balik Dari Nala; filter lipat, chip menyaring. Ketuk foto — viewer ruang terang: paper hangat feminin, foto tuan rumah. ROAR! mini di segel unduh. Kredit serif miring memuliakan pembuat.
 FIRST VIEWPORT: Hero tetap panggung identitas (NALA, mane, voice) — tidak direkomposisi; hanya divider kuas teal-ink tipis memisahkan hero-galeri & grain near-invisible. Di bawahnya toolbar hairline kini dengan urut di dekat search, section-head dengan stats X foto · Y fotografer · diperbarui Z (trust whisper), grid 28px airier, pagination Muat lebih banyak hidden hingga koleksi >12. Pita 10px + brushstroke satu.
-FORM: Seed 5f35e7de mengikat kontrak panggung-arsip ini — teal terkomit #0E7C86/#0A5D64/#E2F2EF, lime dibatasi, satu transisi fluid, microcopy & #SeniNala & DARI NALA & Nalania tetap bold, grain & kuas restrained, warmth tanpa ilustrasi, serif miring, viewer dual-ruang persisten, validasi & arsip (sort Terbaru default, PAGE_SIZE 12, filter→sort→paginate). Validasi, duplikat, persetujuan, arsip tetap.
+FORM: Seed 5f35e7de mengikat kontrak panggung-arsip ini — teal terkomit #0E7C86/#0A5D64/#E2F2EF, lime dibatasi, satu transisi fluid, microcopy & #SeniNala & DARI NALA & Nalania tetap bold, grain & kuas restrained, warmth tanpa ilustrasi, serif miring, viewer satu ruang terang, validasi & arsip (sort Terbaru default, PAGE_SIZE 12, filter→sort→paginate). Validasi, duplikat, persetujuan, arsip tetap.
 unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 -->
 <a class="skip" href="#main">Lewati ke konten</a>
@@ -160,10 +160,14 @@ unreviewed and undocumented is unfinished; this build ends with the finish revie
 </footer>
 
 <script>
+const SUPABASE_URL = "https://giaoisdecffzmeoixxzs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpYW9pc2RlY2Zmem1lb2l4eHpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTY3MzksImV4cCI6MjEwNDA5MjczOX0.uw6UBD0W4ieQYObgEA5G2u7HhzouSLHO4Eql9KhgmSQ";
 // MODEL: tweet-as-unit — each item gains a `photos` array; existing single-photo logic keeps working with 1-entry arrays.
 // Real data R1-R3 knowledge remains DOCUMENTED elsewhere; in-code collection is now empty to show only real photos (none supplied yet → honest empty state).
-const photos = [];
+let photos = [];
 const PAGE_SIZE = 12; // jumlah foto per halaman — 12 terasa arsip, ringan di ponsel; tombol Muat lebih banyak hidden jika <=12
+let galleryLoading = true;
+let galleryLoadError = false;
 let sortMode = "newest"; // default Terbaru
 let currentPage = 1;
 let activeFilters = {era:null, photographer:null, q:""};
@@ -173,6 +177,87 @@ let filtered = [...photos];
 let filteredSorted = [...photos];
 let visible = [];
 const monthMap = {Jan:0, Feb:1, Mar:2, Apr:3, Mei:4, Jun:5, Jul:6, Agu:7, Sep:8, Okt:9, Nov:10, Des:11};
+function formatDateId(raw){
+  if(!raw) return "";
+  const s = String(raw).trim();
+  if(/^\d{1,2}\s+\w+\s+\d{4}$/.test(s)) return s;
+  const d = new Date(s);
+  if(!isNaN(d)){
+    const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  return s;
+}
+function mapTweetRow(row){
+  const tweetDateRaw = row.tweet_date;
+  const curatedRaw = row.curated_at;
+  const dateStr = formatDateId(tweetDateRaw);
+  const curatedStr = curatedRaw ? formatDateId(curatedRaw) : "—";
+  const handleClean = String(row.handle||"").replace(/^@/,"");
+  const authorName = row.author || (handleClean ? `@${handleClean}` : "@anon");
+  const photosArr = Array.isArray(row.photos) ? row.photos.slice().sort((a,b)=>(a.position||0)-(b.position||0)).map(ph=>({
+    pid: String(ph.id || `${row.id}-${ph.position||1}`),
+    image_url_large: ph.image_url_large||"",
+    image_url_orig: ph.image_url_orig||"",
+    width: ph.width||null,
+    height: ph.height||null
+  })) : [];
+  const year = (()=>{
+    if(!tweetDateRaw) return null;
+    const d = new Date(tweetDateRaw);
+    if(!isNaN(d)) return d.getFullYear();
+    const m = String(tweetDateRaw).match(/(\d{4})/);
+    return m ? parseInt(m[1],10) : null;
+  })();
+  return {
+    id: String(row.id),
+    tweetUrl: row.url,
+    author: authorName,
+    handle: handleClean,
+    photographer: authorName,
+    caption: row.caption||"",
+    captionReal: row.caption||"",
+    date: dateStr,
+    curatedAt: curatedStr,
+    era: year ? `Era ${year}` : "Era —",
+    badge: handleClean==="Nala_JKT48" ? "DARI NALA" : "FOTO MENYUSUL",
+    isReal: true,
+    deleted: false,
+    accent: handleClean==="Nala_JKT48" ? "#0E7C86" : "#E2F2EF",
+    palette: handleClean==="Nala_JKT48" ? ["#0E7C86","#E2F2EF"] : ["#0E7C86","#E2F2EF","#FFFBF2"],
+    photos: photosArr,
+    report_count: row.report_count||0,
+    reportCount: row.report_count||0
+  };
+}
+function renderGalleryLoading(){
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("empty");
+  if(!galleryLoading) return;
+  if(grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:28px 12px;color:var(--muted);font-weight:700;font-size:13px;letter-spacing:.02em">Memuat galeri, semangat!</div>`;
+  if(empty) empty.hidden = true;
+  const lm = document.getElementById("loadMore"); if(lm) lm.hidden = true;
+}
+async function fetchGallery(){
+  galleryLoading = true;
+  galleryLoadError = false;
+  renderGalleryLoading();
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&order=tweet_date.desc.nullslast&select=*,photos(*)`, { headers: { apikey: SUPABASE_ANON_KEY, Accept: "application/json" } });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    photos = (rows||[]).map(mapTweetRow);
+  }catch(err){
+    console.error("[Nala Gallery] gagal memuat galeri", err);
+    galleryLoadError = true;
+    photos = [];
+  }finally{
+    galleryLoading = false;
+    applyFilters();
+    renderPhotographers();
+    renderSpotlight();
+  }
+}
 function parseDate(str){
   if(!str) return null;
   const m = String(str).trim().match(/^(\d{1,2})\s+(\w+)\s+(\d{4})$/);
@@ -292,27 +377,49 @@ function openSpotlightPhoto(tweetId, photoIdx){
     }
   }
 }
-const REPORTS_KEY="nala-reports";
 const REPORTED_KEY="nala-reported";
-function loadReports(){
-  try{ return JSON.parse(localStorage.getItem(REPORTS_KEY)||"{}"); }catch(e){ return {}; }
-}
 function loadReported(){
   try{ return new Set(JSON.parse(localStorage.getItem(REPORTED_KEY)||"[]")); }catch(e){ return new Set(); }
 }
-let reportCounts=loadReports();
 let reportedSet=loadReported();
+let reportCountsFetched={};
 function hasReported(id){ return reportedSet.has(String(id)); }
-function getReportCount(id){ return reportCounts[String(id)]||0; }
-function doReport(id){
+function getReportCount(id){
+  const sid=String(id);
+  if(reportCountsFetched[sid]!==undefined) return reportCountsFetched[sid];
+  const tw=photos.find(p=>String(p.id)===sid);
+  if(tw) return tw.report_count||tw.reportCount||0;
+  return 0;
+}
+async function doReport(id){
   const sid=String(id);
   if(hasReported(sid)) return false;
-  reportCounts[sid]=(reportCounts[sid]||0)+1;
   reportedSet.add(sid);
+  try{ localStorage.setItem(REPORTED_KEY, JSON.stringify([...reportedSet])); }catch(e){}
   try{
-    localStorage.setItem(REPORTS_KEY, JSON.stringify(reportCounts));
-    localStorage.setItem(REPORTED_KEY, JSON.stringify([...reportedSet]));
-  }catch(e){}
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports`, {
+      method:"POST",
+      headers:{ apikey: SUPABASE_ANON_KEY, "Content-Type":"application/json", Prefer:"return=minimal" },
+      body: JSON.stringify({ tweet_id: sid })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  }catch(err){
+    console.error("[Nala Gallery] lapor gagal", err);
+    showToast("Hai-hai, laporannya belum kekirim — coba lagi nanti ya, makasih semangatnya!");
+    return true;
+  }
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/reports?tweet_id=eq.${encodeURIComponent(sid)}&select=id`, { headers:{ apikey: SUPABASE_ANON_KEY, Accept:"application/json" } });
+    if(r.ok){
+      const arr = await r.json();
+      reportCountsFetched[sid] = Array.isArray(arr) ? arr.length : 1;
+      const tw2=photos.find(p=>String(p.id)===sid);
+      if(tw2) tw2.report_count = reportCountsFetched[sid];
+    } else { reportCountsFetched[sid]=1; }
+  }catch(e){
+    console.error("[Nala Gallery] hitung laporan gagal", e);
+    reportCountsFetched[sid]=1;
+  }
   return true;
 }
 function showToast(msg){
@@ -463,8 +570,25 @@ function renderGrid(){
   const grid = $("#grid");
   const empty = $("#empty");
   grid.innerHTML = "";
-  if(filteredSorted.length===0){ empty.hidden=false; updateLoadMore(); return; }
-  empty.hidden=true;
+  if(galleryLoading){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:28px 12px;color:var(--muted);font-weight:700;font-size:13px;letter-spacing:.02em">Memuat galeri, semangat!</div>`;
+    if(empty) empty.hidden=true;
+    updateLoadMore();
+    return;
+  }
+  if(filteredSorted.length===0){
+    if(empty){
+      if(galleryLoadError){
+        empty.innerHTML = `<b>Hai-hai! Belum ketemu yang cocok — yuk coba lagi ya!</b><span>Coba ganti kata kunci atau atur ulang filter ya, tetap semangat Roar!</span><span style="font-size:11px;letter-spacing:.04em;color:var(--muted);font-weight:600">tidak bisa memuat galeri, cek koneksi</span><button class="btn small" type="button" onclick="resetFilters()">Atur ulang filter yuk!</button>`;
+      } else {
+        empty.innerHTML = `<b>Hai-hai! Belum ketemu yang cocok — yuk coba lagi ya!</b><span>Coba ganti kata kunci atau atur ulang filter ya, tetap semangat Roar!</span><button class="btn small" type="button" onclick="resetFilters()">Atur ulang filter yuk!</button>`;
+      }
+      empty.hidden=false;
+    }
+    updateLoadMore();
+    return;
+  }
+  if(empty) empty.hidden=true;
   const ceriaGridNodes=[];
   visible.forEach((p, idx)=>{
     const nPhotos = p.photos ? p.photos.length : 1;
@@ -506,17 +630,21 @@ function renderGrid(){
     btn.addEventListener("click", ()=> openViewer(parseInt(btn.getAttribute("data-open"),10)));
   });
   grid.querySelectorAll("[data-report]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
+    btn.addEventListener("click", async ()=>{
       const id=btn.getAttribute("data-report");
-      if(doReport(id)){
+      if(hasReported(id)){
+        showToast("Udah kamu laporkan kok, makasih ya!");
+        return;
+      }
+      btn.disabled=true;
+      btn.textContent="Mengirim laporan, sebentar ya...";
+      const ok=await doReport(id);
+      if(ok){
         showToast("Hai-hai, makasih ya — Nalania bakal tinjau, tetap semangat!");
         btn.textContent="Sudah dilaporkan, makasih ya!";
-        btn.disabled=true;
         renderGrid();
         updateStats();
         renderPhotographers();
-      } else {
-        showToast("Udah kamu laporkan kok, makasih ya!");
       }
     });
   });
@@ -790,18 +918,22 @@ function updateViewerChrome(){
   updateDownloadHandler();
   const vrBtn=document.querySelector("[data-report-viewer]");
   if(vrBtn){
-    vrBtn.addEventListener("click", ()=>{
+    vrBtn.addEventListener("click", async ()=>{
       const id=vrBtn.getAttribute("data-report-viewer");
-      if(doReport(id)){
+      if(hasReported(id)){
+        showToast("Udah kamu laporkan kok, makasih ya!");
+        return;
+      }
+      vrBtn.disabled=true;
+      vrBtn.textContent="Mengirim laporan, sebentar ya...";
+      const ok=await doReport(id);
+      if(ok){
         showToast("Hai-hai, makasih ya — Nalania bakal tinjau, tetap semangat!");
         vrBtn.textContent="Sudah dilaporkan, makasih ya!";
-        vrBtn.disabled=true;
         renderGrid();
         updateStats();
         renderPhotographers();
         renderViewer();
-      } else {
-        showToast("Udah kamu laporkan kok, makasih ya!");
       }
     });
   }
@@ -842,9 +974,9 @@ document.addEventListener("keydown",(e)=>{
   }
 });
 ceriaHeroEnter();
-renderPhotographers();
 applyFilters();
-renderSpotlight();
+renderGalleryLoading();
+fetchGallery();
 </script>
 </body>
 </html>

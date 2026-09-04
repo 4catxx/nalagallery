@@ -98,45 +98,50 @@
 </footer>
 
 <script>
-const photos = [];
-const SUBMISSIONS_KEY = "nala-submissions";
+const SUPABASE_URL = "https://giaoisdecffzmeoixxzs.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpYW9pc2RlY2Zmem1lb2l4eHpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTY3MzksImV4cCI6MjEwNDA5MjczOX0.uw6UBD0W4ieQYObgEA5G2u7HhzouSLHO4Eql9KhgmSQ";
+let photos = [];
+let knownUrls = new Set();
 const $ = s=>document.querySelector(s);
 const esc = s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
 function handleFromUrl(url){
   const m=String(url).match(/^(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/([^\/]+)\/status\/\d+/i);
   return m ? m[1] : "";
 }
-function loadSubmissions(){
-  try{ const raw=localStorage.getItem(SUBMISSIONS_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
-}
-function saveSubmission(entry){
-  try{
-    const arr=loadSubmissions();
-    arr.push(entry);
-    localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(arr));
-  }catch(e){}
-}
-function saveSubmissionsBulk(entries){
-  try{
-    const arr=loadSubmissions();
-    entries.forEach(en=>arr.push(en));
-    localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(arr));
-  }catch(e){}
-}
 const urlRe = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[A-Za-z0-9_]+\/status\/\d+(\?.*)?$/;
 function isDuplicate(url){
   const norm = url.trim();
   if(photos.some(p=>p.tweetUrl===norm)) return true;
-  const stored=loadSubmissions();
-  if(stored.some(s=>s.tweetUrl===norm)) return true;
+  if(knownUrls.has(norm)) return true;
   return false;
 }
-$("#submitForm").addEventListener("submit", (e)=>{
+async function refreshKnownUrls(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/tweets?select=url`, { headers:{ apikey: SUPABASE_ANON_KEY, Accept:"application/json" } });
+    if(r.ok){
+      const rows = await r.json();
+      knownUrls = new Set((rows||[]).map(row=>String(row.url).trim()).filter(Boolean));
+    }
+  }catch(e){ console.error("[Nala Gallery upload] gagal memuat url duplikat", e); }
+}
+async function postTweet(url){
+  const handle = handleFromUrl(url);
+  const body = { url: url.trim(), author: handle?`@${handle}`:"@anon", handle: handle, caption:"", status:"pending" };
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/tweets`, {
+    method:"POST",
+    headers:{ apikey: SUPABASE_ANON_KEY, "Content-Type":"application/json", Prefer:"return=representation" },
+    body: JSON.stringify(body)
+  });
+  return res;
+}
+refreshKnownUrls();
+$("#submitForm").addEventListener("submit", async (e)=>{
   e.preventDefault();
   const urlInput = $("#tweetUrl");
   const err = $("#urlError");
   const dup = $("#dupWarn");
   const ok = $("#submitOk");
+  const btn = e.target.querySelector('button[type="submit"]');
   const url = urlInput.value.trim();
   err.hidden=true; dup.hidden=true; ok.hidden=true;
   if(!urlRe.test(url)){
@@ -146,12 +151,44 @@ $("#submitForm").addEventListener("submit", (e)=>{
   if(isDuplicate(url)){
     dup.hidden=false;
   }
-  const handle=handleFromUrl(url);
-  const entry={tweetUrl:url, handle:handle, caption:"", submittedAt:new Date().toISOString(), status:"pending"};
-  saveSubmission(entry);
-  ok.hidden=false;
-  urlInput.value=""; $("#submitNote").value="";
-  urlInput.focus();
+  const prevText = btn ? btn.textContent : "";
+  if(btn){ btn.disabled=true; btn.textContent="Mengirim, sebentar ya..."; }
+  try{
+    const res = await postTweet(url);
+    if(res.status===409 || res.status===23505){
+      err.textContent = "Hai-hai, duplikat ketahuan! URL ini sudah ada di galeri atau antrean, cek lagi ya.";
+      err.hidden=false;
+      dup.hidden=false;
+      if(btn){ btn.disabled=false; btn.textContent=prevText; }
+      return;
+    }
+    if(!res.ok){
+      let msg="";
+      try{ const j=await res.json(); msg=j.message||j.msg||""; }catch(_){}
+      if(msg && /duplicate|unique|already/i.test(msg)){
+        err.textContent = "Hai-hai, duplikat ketahuan! URL ini sudah ada di galeri atau antrean, cek lagi ya.";
+        err.hidden=false;
+        dup.hidden=false;
+      } else {
+        err.textContent = "Hai-hai, belum kekirim — cek koneksi ya, coba lagi, semangat!";
+        err.hidden=false;
+        console.error("[Nala Gallery] submit gagal", res.status, msg);
+      }
+      if(btn){ btn.disabled=false; btn.textContent=prevText; }
+      return;
+    }
+    knownUrls.add(url);
+    ok.hidden=false;
+    urlInput.value=""; $("#submitNote").value="";
+    dup.hidden=true;
+    urlInput.focus();
+  }catch(err2){
+    console.error("[Nala Gallery] submit error", err2);
+    err.textContent = "Hai-hai, belum kekirim — cek koneksi ya, coba lagi, semangat!";
+    err.hidden=false;
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent=prevText||"Kirim buat dikurasi ya, Roar!"; }
+  }
 });
 $("#tweetUrl").addEventListener("input", ()=>{
   const v=$("#tweetUrl").value.trim();
@@ -237,23 +274,41 @@ $("#bulkValidate").addEventListener("click", ()=>{
   }
   renderBulkRows(items);
 });
-$("#bulkSubmit").addEventListener("click", ()=>{
+$("#bulkSubmit").addEventListener("click", async ()=>{
   if(!bulkValid.length) return;
-  const entries=bulkValid.map(url=>{
-    const h=handleFromUrl(url);
-    return {tweetUrl:url, handle:h, caption:"", submittedAt:new Date().toISOString(), status:"pending"};
-  });
-  saveSubmissionsBulk(entries);
+  const btn=$("#bulkSubmit");
+  const prevText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent="Mengirim, sebentar ya...";
+  let okCount=0, dupCount=0, failCount=0;
+  for(const url of [...bulkValid]){
+    try{
+      const res=await postTweet(url);
+      if(res.status===409 || res.status===23505){ dupCount++; continue; }
+      if(!res.ok){
+        let m=""; try{ const j=await res.json(); m=j.message||""; }catch(_){}
+        if(m && /duplicate|unique|already/i.test(m)){ dupCount++; }
+        else { failCount++; console.error("[Nala Gallery] bulk submit gagal", url, res.status, m); }
+        continue;
+      }
+      okCount++; knownUrls.add(url);
+    }catch(e){ failCount++; console.error("[Nala Gallery] bulk error", url, e); }
+  }
   const t=document.createElement("div");
-  t.textContent=`Roar! ${bulkValid.length} tautan terkirim — menunggu persetujuan Nalania, tetap semangat!`;
+  if(okCount>0) t.textContent=`Roar! ${okCount} tautan terkirim — menunggu persetujuan Nalania, tetap semangat!${dupCount?` · ${dupCount} duplikat ya`:``}${failCount?` · ${failCount} gagal, cek koneksi`:``}`;
+  else if(dupCount>0) t.textContent=`Hai-hai, semuanya duplikat — sudah ada di antrean/galeri ya!`;
+  else t.textContent=`Hai-hai, belum kekirim — cek koneksi ya, coba lagi, semangat!`;
   t.className="ceria-toast";
   t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--field);color:var(--paper);padding:10px 14px;border-radius:999px;font-size:12px;font-weight:800;z-index:90;border:1px solid var(--field-deep)";
-  document.body.appendChild(t); setTimeout(()=>t.remove(), 2200);
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2800);
   $("#bulkUrls").value="";
   $("#bulkRows").innerHTML="";
-  $("#bulkSummary").innerHTML=`Yeay! ${bulkValid.length} valid terkirim, menunggu persetujuan!`;
+  if(okCount>0) $("#bulkSummary").innerHTML=`Yeay! ${okCount} valid terkirim, menunggu persetujuan!${dupCount?` · ${dupCount} duplikat dilewati`:``}${failCount?` · ${failCount} gagal`:``}`;
+  else $("#bulkSummary").innerHTML=`${dupCount?dupCount+" duplikat": ""}${failCount?` · ${failCount} gagal, cek koneksi`:``} — coba lagi ya!`;
   $("#bulkSubmit").hidden=true;
+  btn.disabled=false; btn.textContent=prevText;
   bulkValid=[];
+  refreshKnownUrls();
 });
 </script>
 </body>
