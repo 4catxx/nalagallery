@@ -106,6 +106,196 @@ function getHandleForItem(item){
   if(item.photographer) return String(item.photographer).replace(/^@/,"").split(/\s/)[0].split("·")[0].trim();
   return "";
 }
+// OPSI_C_ADMIN_IMAGE_FIELDS: manual fallback + auto-fetch draft store (max 4)
+const draftMap = new Map();
+function getDraftUrls(id){
+  const key=String(id);
+  if(!draftMap.has(key)) draftMap.set(key, [""]);
+  return draftMap.get(key);
+}
+function collectImageUrls(id){
+  const arr=draftMap.get(String(id))||[];
+  return arr.map(s=>String(s).trim()).filter(Boolean).slice(0,4);
+}
+function renderImageRows(id){
+  const key=String(id);
+  const wrap=document.getElementById(`imageRows-${key}`);
+  if(!wrap) return;
+  const arr=getDraftUrls(key);
+  wrap.innerHTML="";
+  arr.forEach((val, idx)=>{
+    const row=document.createElement("div");
+    row.style.cssText="display:flex;gap:6px;align-items:center";
+    row.innerHTML=`<input type="url" inputmode="url" placeholder="https://pbs.twimg.com/media/..." value="${esc(val)}" data-image-input="${key}-${idx}" aria-label="URL gambar ${idx+1} untuk tweet ${esc(key)}" style="flex:1;padding:9px 11px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);font-size:12px;font-weight:600;box-shadow:0 1px 0 var(--line)"><button class="btn small" type="button" data-remove-image="${key}-${idx}" aria-label="Hapus baris ${idx+1}" style="padding:6px 10px;flex-shrink:0">Hapus</button>`;
+    wrap.appendChild(row);
+  });
+  // wire inputs + remove
+  wrap.querySelectorAll("input[data-image-input]").forEach(inp=>{
+    inp.addEventListener("input", (e)=>{
+      const parts=e.target.getAttribute("data-image-input").split("-");
+      const tweetKey=parts.slice(0,-1).join("-");
+      const i=parseInt(parts[parts.length-1],10);
+      const a=draftMap.get(tweetKey)||[];
+      a[i]=e.target.value;
+      draftMap.set(tweetKey, a);
+      renderImagePreview(tweetKey);
+    });
+  });
+  wrap.querySelectorAll("button[data-remove-image]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const parts=btn.getAttribute("data-remove-image").split("-");
+      const tweetKey=parts.slice(0,-1).join("-");
+      const i=parseInt(parts[parts.length-1],10);
+      const a=draftMap.get(tweetKey)||[];
+      a.splice(i,1);
+      if(a.length===0) a.push("");
+      draftMap.set(tweetKey, a);
+      renderImageRows(tweetKey);
+      renderImagePreview(tweetKey);
+    });
+  });
+  // toggle tambah button disabled when >=4
+  const addBtn=document.querySelector(`[data-add-image="${key}"]`);
+  if(addBtn) addBtn.disabled = (draftMap.get(key)||[]).length >= 4;
+}
+function renderImagePreview(id){
+  const key=String(id);
+  const strip=document.getElementById(`imagePreview-${key}`);
+  if(!strip) return;
+  strip.innerHTML="";
+  const urls=collectImageUrls(key);
+  if(urls.length===0){
+    strip.innerHTML=`<span style="grid-column:1/-1;font-size:11px;color:var(--muted);font-weight:600">Belum ada URL foto — tempel manual atau klik Ambil foto otomatis ya, Hai-hai!</span>`;
+    return;
+  }
+  urls.forEach((u,i)=>{
+    const thumb=document.createElement("div");
+    thumb.className="admin-thumb frame-ink";
+    thumb.style.cssText="border-radius:12px;overflow:hidden;background:var(--paper);aspect-ratio:1/1;display:grid;place-items:center;position:relative;border:1px solid var(--line)";
+    const img=document.createElement("img");
+    img.src=u;
+    img.alt=`Pratinjau foto ${i+1}`;
+    img.loading="lazy";
+    img.style.cssText="width:100%;height:100%;object-fit:cover;object-position:center;display:block";
+    img.onerror=()=>{
+      img.style.display="none";
+      const note=document.createElement("span");
+      note.textContent="tidak bisa pratinjau";
+      note.style.cssText="font-size:9px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--muted);padding:6px;text-align:center;display:grid;place-items:center;width:100%;height:100%";
+      thumb.appendChild(note);
+    };
+    thumb.appendChild(img);
+    strip.appendChild(thumb);
+  });
+}
+function extractPhotoUrls(data){
+  const urls=[];
+  const add=(arr)=>{
+    if(!Array.isArray(arr)) return;
+    arr.forEach(item=>{
+      if(!item) return;
+      let u="";
+      if(typeof item==="string") u=item;
+      else if(item.url) u=item.url;
+      else if(item.media_url_https) u=item.media_url_https;
+      else if(item.media_url) u=item.media_url;
+      else if(item.src) u=item.src;
+      if(u && typeof u==="string"){
+        if(u.includes("pbs.twimg.com") || u.includes("twimg.com")){
+          urls.push(String(u).trim());
+        }
+      }
+    });
+  };
+  try{
+    const candidates=[
+      data?.tweet?.media?.photos,
+      data?.tweet?.media?.photo,
+      data?.media?.photos,
+      data?.tweet?.extended_entities?.media,
+      data?.extended_entities?.media,
+      data?.tweet?.entities?.media,
+      data?.media?.photo,
+      data?.tweet?.photos,
+      data?.photos,
+      data?.tweet?.attachments?.media,
+      data?.tweet?.media
+    ];
+    candidates.forEach(c=>{
+      if(Array.isArray(c)) add(c);
+      else if(c && typeof c==="object" && Array.isArray(c.photos)) add(c.photos);
+    });
+    if(urls.length===0 && data){
+      const seen=new Set();
+      const stack=[data];
+      let steps=0;
+      while(stack.length && steps<220){
+        steps++;
+        const cur=stack.pop();
+        if(!cur || typeof cur!=="object") continue;
+        if(seen.has(cur)) continue;
+        seen.add(cur);
+        for(const k in cur){
+          const v=cur[k];
+          if(typeof v==="string" && v.includes("pbs.twimg.com/media")){
+            if(/^https?:\/\/pbs\.twimg\.com\/media\//.test(v)) urls.push(v);
+          } else if(Array.isArray(v)){
+            v.forEach(el=>{
+              if(el && typeof el==="object") stack.push(el);
+              else if(typeof el==="string" && el.includes("pbs.twimg.com")) urls.push(el);
+            });
+          } else if(v && typeof v==="object"){
+            stack.push(v);
+          }
+        }
+      }
+    }
+  }catch(e){ console.error("[extractPhotoUrls] error", e); }
+  const uniq=[];
+  const seenUrl=new Set();
+  urls.forEach(u=>{
+    const clean=String(u).trim();
+    if(!clean) return;
+    if(seenUrl.has(clean)) return;
+    seenUrl.add(clean);
+    uniq.push(clean);
+  });
+  return uniq.slice(0,4);
+}
+async function autoFetchImages(id){
+  const key=String(id);
+  const item=pending.find(p=>String(p.id)===key);
+  if(!item){ showToast("Hai-hai, tweet tidak ketemu — coba muat ulang ya!", false); return; }
+  const url=item.tweetUrl||"";
+  const handle=(item.handle||getHandleForItem(item)||"").replace(/^@/,"");
+  const m=String(url).match(/\/status\/(\d+)/);
+  const tweetId=m?m[1]:"";
+  if(!handle || !tweetId){ showToast("tidak bisa ambil otomatis — tempel manual ya, semangat!", false); return; }
+  const btn=document.querySelector(`[data-auto-fetch="${key}"]`);
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Mengambil, sebentar ya..."; }
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(), 12000);
+  try{
+    const apiUrl=`https://api.fxtwitter.com/${encodeURIComponent(handle)}/status/${encodeURIComponent(tweetId)}`;
+    const res=await fetch(apiUrl, { signal: controller.signal, headers:{ Accept:"application/json" } });
+    clearTimeout(timeout);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    const urls=extractPhotoUrls(data);
+    if(!urls.length) throw new Error("no photos");
+    draftMap.set(key, urls);
+    renderImageRows(key);
+    renderImagePreview(key);
+    showToast(`Dapat ${urls.length} foto, cek ya!`, true);
+  }catch(err){
+    clearTimeout(timeout);
+    console.error("[Nala Admin] auto fetch gagal", err);
+    showToast("tidak bisa ambil otomatis — tempel manual ya, semangat!", false);
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent=prevText||"Ambil foto otomatis · Roar!"; }
+  }
+}
 let pending = [];
 let approvedCount = 0, rejectedCount = 0;
 let accessToken = null;
@@ -136,8 +326,24 @@ function tweetSvgThumb(label){
   return `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(label)} — SINTETIS thumb"><rect width="${w}" height="${h}" rx="10" fill="#F2E9DE" stroke="#E8DDD3"/><rect x="8" y="8" width="${parseInt(w)-16}" height="${parseInt(h)-42}" rx="8" fill="#FFFBF2" stroke="#E8DDD3"/><text x="${cx}" y="${cy}" text-anchor="middle" font-size="7" font-weight="900" letter-spacing=".08em" fill="#6B625C">SINTETIS</text><text x="${cx}" y="${parseInt(h)-14}" text-anchor="middle" font-size="6.5" font-weight="800" letter-spacing=".06em" fill="#0F0F0E">${esc(label)}</text></svg>`;
 }
 function queueMediaHtml(item){
-  const n = item.photos ? item.photos.length : 1;
+  const n = item.photos ? item.photos.length : 0;
   const handle=getHandleForItem(item);
+  const hasImages=item.photos && item.photos.some(ph=>ph.image_url_large||ph.image_url_orig);
+  if(hasImages){
+    const thumbs=item.photos.map((ph,i)=>{
+      const pid=ph.pid || `${item.id}-${i+1}`;
+      const v=getFrameVariantByIds(handle, item.id, pid);
+      const src=ph.image_url_large || ph.image_url_orig;
+      if(src){
+        return `<div class="admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)"><img src="${esc(src)}" alt="Foto ${i+1} dari ${item.photos.length}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div style="display:none;place-items:center;padding:8px;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;min-height:60px">tidak bisa pratinjau</div></div>`;
+      }
+      return `<div class="admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)">${tweetSvgThumb(ph.label || `Foto ${i+1}`)}</div>`;
+    }).join("");
+    if(n<=1){
+      return `<div class="tweet-media" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:1fr;gap:6px">${thumbs}</div></div>`;
+    }
+    return `<div class="tweet-media" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${thumbs}</div><small style="color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase">${n} foto dalam 1 tweet</small></div>`;
+  }
   if(n<=1){
     const pid=(item.photos && item.photos[0] && item.photos[0].pid) ? item.photos[0].pid : `${item.id}-1`;
     const v=getFrameVariantByIds(handle, item.id, pid);
@@ -251,6 +457,17 @@ function renderQueue(){
         <div class="tweet-actions">
           <b style="font-size:13px;letter-spacing:-.02em">Kurasi bareng Nalania</b>
           <p style="margin:0;color:var(--muted);font-size:12px;font-weight:600;line-height:1.5">Klik Setujui biar terbit ke galeri (snapshot kredit disimpan rapi). Tolak buat tandai ditolak ya.</p>
+          <div class="admin-image-fields" data-image-fields="${esc(item.id)}" style="display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--paper)">
+            <label style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:900;color:var(--ink-2)">Foto (opsional, 1–4 URL gambar — ambil otomatis atau tempel manual, semangat!)</label>
+            <div class="admin-image-rows" id="imageRows-${esc(item.id)}" style="display:grid;gap:6px"></div>
+            <div class="admin-image-preview-strip" id="imagePreview-${esc(item.id)}" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:44px;align-content:start"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="btn small" type="button" data-add-image="${esc(item.id)}">+ Tambah baris</button>
+              <button class="btn small" type="button" data-auto-fetch="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Ambil foto otomatis · Roar!</button>
+              <small style="font-size:10px;color:var(--muted);font-weight:600">Hai-hai! manual tetap bisa, auto cuma bantu — gagal auto nggak blok, semangat!</small>
+            </div>
+            <small style="font-size:10px;color:var(--muted);font-weight:600">Tempel URL gambar langsung dari pbs.twimg.com ya — maks 4 biar rapi, Roar!</small>
+          </div>
           <div class="row">
             <button class="btn accent" type="button" data-approve="${esc(item.id)}">Setujui</button>
             <button class="btn" type="button" data-reject="${esc(item.id)}" style="background:var(--paper)">Tolak</button>
@@ -260,6 +477,26 @@ function renderQueue(){
       `;
       q.appendChild(card);
     });
+    // wire image field rows + previews + auto-fetch per item
+    pending.forEach(item=>{
+      renderImageRows(item.id);
+      renderImagePreview(item.id);
+    });
+    q.querySelectorAll("[data-add-image]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const id=b.getAttribute("data-add-image");
+        const arr=draftMap.get(String(id))||[];
+        if(arr.length>=4){ showToast("Maksimal 4 foto ya, Hai-hai!", false); return; }
+        arr.push("");
+        draftMap.set(String(id), arr);
+        renderImageRows(id);
+        // focus last input
+        const wrap=document.getElementById(`imageRows-${id}`);
+        const last=wrap && wrap.querySelector("input:last-of-type");
+        if(last) last.focus();
+      });
+    });
+    q.querySelectorAll("[data-auto-fetch]").forEach(b=> b.addEventListener("click", ()=> autoFetchImages(b.getAttribute("data-auto-fetch"))));
     q.querySelectorAll("[data-approve]").forEach(b=> b.addEventListener("click", ()=> approve(b.getAttribute("data-approve"))));
     q.querySelectorAll("[data-reject]").forEach(b=> b.addEventListener("click", ()=> reject(b.getAttribute("data-reject"))));
   }
@@ -272,6 +509,23 @@ async function approve(id){
   const btn=document.querySelector(`[data-approve="${id}"]`);
   if(btn){ btn.disabled=true; btn.textContent="Menyetujui..."; }
   const today=new Date().toISOString().slice(0,10);
+  const urls=collectImageUrls(id);
+  if(urls.length>0){
+    try{
+      const payload=urls.map((u,i)=>({ tweet_id:String(id), position:i+1, image_url_orig:u, image_url_large:u }));
+      const resPhotos=await fetch(`${SUPABASE_URL}/rest/v1/photos`, {
+        method:"POST",
+        headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
+        body: JSON.stringify(payload)
+      });
+      if(!resPhotos.ok) throw new Error(`HTTP ${resPhotos.status}`);
+    }catch(err){
+      console.error("[Nala Admin] simpan foto gagal", err);
+      showToast("Hai-hai, foto belum kesimpen — cek URL ya, kalau gagal tetap bisa Setujui tanpa foto kok!", false);
+      if(btn){ btn.disabled=false; btn.textContent="Setujui"; }
+      return;
+    }
+  }
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
       method:"PATCH",
@@ -279,6 +533,7 @@ async function approve(id){
       body: JSON.stringify({ status:"approved", curated_at: today })
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    draftMap.delete(String(id));
     pending = pending.filter(p=>p.id!==id);
     approvedCount++;
     renderQueue();

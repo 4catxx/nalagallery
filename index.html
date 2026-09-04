@@ -324,7 +324,7 @@ function renderSpotlight(){
     btn.setAttribute("role","listitem");
     btn.setAttribute("aria-label",`Buka foto ${t.caption.slice(0,40)} oleh ${t.photographer} ${t.date} — DARI NALA`);
     btn.innerHTML=`
-      <span class="card-media">${svgPlaceholder(t, t.id, entry.photoIdx, {fit:"xMidYMid meet"})}<span class="badge-sintetis" style="background:var(--field);color:var(--paper);border-color:var(--field)">DARI NALA</span></span>
+      <span class="card-media">${mediaHtml(t, entry.photoIdx, {fit:"xMidYMid meet"})}<span class="badge-sintetis" style="background:var(--field);color:var(--paper);border-color:var(--field)">DARI NALA</span></span>
       <span class="card-body"><span class="card-title">${esc(t.captionReal || t.caption)}</span><span class="card-meta"><span class="meta-pill">${esc(t.date||"")}</span><span class="meta-pill">@${esc(t.handle)}</span></span></span>
     `;
     btn.addEventListener("click", ()=> openSpotlightPhoto(t.id, entry.photoIdx));
@@ -339,13 +339,13 @@ function openSpotlightPhoto(tweetId, photoIdx){
   if(idx>=0){
     openViewer(idx);
     viewerPhotoIndex=photoIdx;
-    const track=document.getElementById("viewerTrack");
-    if(track){
-      const active=track.querySelector(".viewer-photo.active");
-      if(active){
-        const media=active.querySelector(".frame-media");
-        const p=visible[idx];
-        if(media) media.innerHTML=svgPlaceholder(p, p.id, photoIdx, {viewer:true});
+     const track=document.getElementById("viewerTrack");
+     if(track){
+       const active=track.querySelector(".viewer-photo.active");
+       if(active){
+         const media=active.querySelector(".frame-media");
+         const p=visible[idx];
+         if(media) media.innerHTML=mediaHtml(p, photoIdx, {viewer:true});
         const vf=active.querySelector(".viewer-frame");
         if(vf){ vf.className="viewer-frame "+getFrameVariant(p, p.photos[photoIdx] ? p.photos[photoIdx].pid : `${p.id}-${photoIdx}`); }
         updatePhotoPager();
@@ -371,8 +371,8 @@ function openSpotlightPhoto(tweetId, photoIdx){
       const v2=visible.findIndex(p=>p.id===tweetId);
       openViewer(v2>=0?v2:0);
       viewerPhotoIndex=photoIdx;
-      const tr=document.getElementById("viewerTrack");
-      if(tr){ const ac=tr.querySelector(".viewer-photo.active"); if(ac){ const med=ac.querySelector(".frame-media"); const pp=visible[v2]; if(med) med.innerHTML=svgPlaceholder(pp, pp.id, photoIdx, {viewer:true}); } }
+       const tr=document.getElementById("viewerTrack");
+       if(tr){ const ac=tr.querySelector(".viewer-photo.active"); if(ac){ const med=ac.querySelector(".frame-media"); const pp=visible[v2]; if(med) med.innerHTML=mediaHtml(pp, photoIdx, {viewer:true}); } }
       updateViewerChrome(); updatePhotoPager(); updateDownloadHandler();
     }
   }
@@ -518,6 +518,28 @@ function svgPlaceholder(p, id, photoIdx, opts){
     ${p.deleted ? `<g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif"><rect x="18" y="${parseInt(vbH)-42}" width="214" height="24" rx="12" fill="#0F0F0E"/><text x="125" y="${parseInt(vbH)-26}" text-anchor="middle" font-size="10" font-weight="850" letter-spacing=".06em" fill="#FFFBF2">SUMBER MATI</text></g>` : ``}
   </svg>`;
 }
+// OPSI_C_GALLERY_PHOTO_PIPELINE: real <img> when image_url_large/_orig exists else FOTO MENYUSUL placeholder; cover-in-grid + contain-in-viewer/spotlight doctrines kept via CSS object-fit
+function getDisplaySrc(photo){
+  if(!photo) return "";
+  return photo.image_url_large || photo.image_url_orig || "";
+}
+function getOrigSrc(photo){
+  if(!photo) return "";
+  return photo.image_url_orig || photo.image_url_large || "";
+}
+function hasPhotoImage(photo){
+  return !!(photo && (photo.image_url_large || photo.image_url_orig));
+}
+function mediaHtml(p, photoIdx, opts){
+  const idx=(typeof photoIdx==="number"?photoIdx:0);
+  const ph=(p.photos && p.photos[idx]) ? p.photos[idx] : (p.photos && p.photos[0] ? p.photos[0] : null);
+  const src=getDisplaySrc(ph);
+  if(src){
+    const alt=esc(p.captionReal || p.caption || `Foto ${p.photographer} — #SeniNala`);
+    return `<img src="${esc(src)}" alt="${alt}" loading="lazy">`;
+  }
+  return svgPlaceholder(p, p.id, idx, opts);
+}
 function applyFilters(){
   const q = activeFilters.q.trim().toLowerCase();
   filtered = photos.filter(p=>{
@@ -601,7 +623,7 @@ function renderGrid(){
       <div class="card-media">
         ${p.isReal ? `<span class="badge-sintetis" style="${p.badge==='DARI NALA' ? `background:var(--field);color:var(--paper)` : `background:var(--paper);color:var(--muted)`}">${esc(p.badge)}</span>` : `<span class="badge-sintetis">SINTETIS</span>`}
         ${nPhotos>1 ? `<span class="badge-multi" aria-label="${nPhotos} foto dalam tweet">+${nPhotos-1} foto</span>` : ``}
-        ${svgPlaceholder(p, p.id, 0)}
+        ${mediaHtml(p, 0)}
         ${p.deleted ? `<div class="badge-dead"><span>Cuplikan tersimpan — sumber mati</span><span style="background:var(--accent);color:var(--ink);padding:3px 7px;border-radius:999px;font-size:10px;border:1px solid var(--ink)">ARSIP</span></div>` : ``}
       </div>
       <div class="card-body">
@@ -810,7 +832,7 @@ function stepPhoto(dir){
   const active = track.querySelector(".viewer-photo.active");
   if(!active) return;
    const media = active.querySelector(".frame-media");
-  if(media) media.innerHTML = svgPlaceholder(p, p.id, viewerPhotoIndex, {viewer:true});
+  if(media) media.innerHTML = mediaHtml(p, viewerPhotoIndex, {viewer:true});
   const vf = active.querySelector(".viewer-frame");
   if(vf){
     const pid2 = (p.photos && p.photos[viewerPhotoIndex] && p.photos[viewerPhotoIndex].pid) ? p.photos[viewerPhotoIndex].pid : `${p.id}-${viewerPhotoIndex+1}`;
@@ -843,6 +865,21 @@ function updateDownloadHandler(){
   if(!p) return;
   const nPhotos = p.photos ? p.photos.length : 1;
   $("#vDownload").onclick = ()=>{
+    const ph=(p.photos && p.photos[viewerPhotoIndex]) ? p.photos[viewerPhotoIndex] : (p.photos && p.photos[0] ? p.photos[0] : null);
+    const orig=getOrigSrc(ph);
+    if(orig){
+      const a=document.createElement("a");
+      a.href=orig; a.download=`nala-gallery-${p.isReal ? p.handle : `sintetis`}-${p.id}-foto${viewerPhotoIndex+1}.jpg`;
+      a.target="_blank"; a.rel="noopener noreferrer";
+      document.body.appendChild(a); a.click(); a.remove();
+      const t=document.createElement("div");
+      t.className="ceria-toast";
+      if(nPhotos>1) t.textContent=`Roar! Mengunduh HD Foto ${viewerPhotoIndex+1} dari ${nPhotos} — semangat!`;
+      else t.textContent="Roar! Mengunduh HD — semangat!";
+      t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--accent);color:var(--ink);border:1.5px solid var(--ink);padding:10px 14px;border-radius:999px;font-weight:900;font-size:12px;z-index:90;box-shadow:var(--shadow-card)";
+      document.body.appendChild(t); setTimeout(()=>t.remove(), 2200);
+      return;
+    }
     const svg = svgPlaceholder(p, p.id, viewerPhotoIndex, {viewer:true});
     const blob = new Blob([svg], {type:"image/svg+xml"});
     const url = URL.createObjectURL(blob);
@@ -869,7 +906,7 @@ function buildViewerPhoto(p, idx, photoIdx){
   const vVariant = getFrameVariant(p, pidForFrame);
   d.innerHTML=`
     <div class="viewer-frame ${vVariant}">
-      <div class="frame-media">${svgPlaceholder(p, p.id, photoIdx, {viewer:true})}</div>
+      <div class="frame-media">${mediaHtml(p, photoIdx, {viewer:true})}</div>
       ${nPhotos>1 ? `<div class="photo-pager" aria-label="Pager foto dalam tweet">
         <button type="button" class="photo-nav" id="photoPrev" aria-label="Foto sebelumnya dalam tweet">‹</button>
         <span class="photo-counter" id="photoCounter">Foto ${photoIdx+1} dari ${nPhotos}</span>

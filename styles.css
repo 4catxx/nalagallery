@@ -736,3 +736,17 @@ button,input{font:inherit}
   .dot,.dot.photo-dot{transition:none !important}
   .ceria-toast{animation:none !important;opacity:1;transform:translateX(-50%)}
 }
+/* ── OPSI_C_ADMIN_IMAGE_FIELDS — manual + auto-fetch (pbs.twimg.com only, no new hues) ── */
+.admin-image-fields{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:10px;display:grid;gap:8px}
+.admin-image-fields label{font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:900;color:var(--ink-2)}
+.admin-image-rows{display:grid;gap:6px}
+.admin-image-rows input[type="url"]{flex:1;padding:9px 11px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);font-size:12px;font-weight:600;box-shadow:0 1px 0 var(--line)}
+.admin-image-rows input[type="url"]:focus-visible{outline:1.5px solid var(--field);outline-offset:2px;box-shadow:0 0 0 4px var(--field-soft)}
+.admin-image-rows input[type="url"]::placeholder{color:var(--muted);font-weight:600}
+.admin-image-preview-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:44px;align-content:start}
+.admin-image-preview-strip .admin-thumb{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper);aspect-ratio:1/1;display:grid;place-items:center;position:relative}
+.admin-image-preview-strip .admin-thumb img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.admin-image-preview-strip span{font-size:11px;color:var(--muted);font-weight:600;line-height:1.4}
+@media(max-width:640px){
+  .admin-image-preview-strip{grid-template-columns:repeat(2,1fr)}
+}
