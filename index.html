@@ -473,8 +473,7 @@ const esc = s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceA
 function svgPlaceholder(p, id, photoIdx, opts){
   photoIdx = (typeof photoIdx==="number" ? photoIdx : 0);
   opts = opts || {};
-  const isViewer = !!opts.viewer;
-  const preserve = opts.fit || (isViewer ? "xMidYMid meet" : "xMidYMid slice");
+  const preserve = opts.fit || "xMidYMid meet";
   const photosLen = p.photos ? p.photos.length : 1;
   const bg = p.deleted ? "#E8DDD0" : (p.accent === "#0F0F0E" ? "#1B1B19" : p.accent === "#E8FF2E" ? "#E8FF2E" : p.palette[0] || "#0E7C86");
   const fg = (bg === "#0F0F0E" || bg === "#1B1B19" || bg === "#0E7C86") ? "#FFFBF2" : "#0F0F0E";
