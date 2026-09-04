@@ -1,0 +1,8 @@
+PRODUCT.md
+DESIGN.md
+.omo/
+.codegraph/
+arsip-quieter/
+b/
+.env
+*.local

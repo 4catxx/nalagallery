@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Nala's Gallery — Kirim Tautan</title>
+<meta name="description" content="Kirim tautan foto-tweet Nala — fanmade, kredit fotografer tetap terjaga.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Lewati ke konten</a>
+<div class="canvas-grain" aria-hidden="true"></div>
+
+<header class="site-head" role="banner">
+  <a class="brand" href="index.html" aria-label="Nala's Gallery — kembali ke galeri">
+    <span class="brand-type">
+      <b>Nala's Gallery</b>
+      <span>Shabilqis Naila — JKT48 <em>· fanmade · bukan resmi</em></span>
+    </span>
+  </a>
+  <nav class="head-nav" aria-label="Navigasi utama">
+    <a class="ghost" href="index.html">← Kembali ke galeri</a>
+    <a class="primary" href="index.html#galeri">Galeri</a>
+  </nav>
+  <span class="meta-counter" aria-hidden="true">#SeniNala · Nalania</span>
+</header>
+
+<main id="main" class="shell" role="main" style="padding-top:18px">
+  <p style="margin:0 0 12px"><a class="btn ghost" href="index.html" style="background:var(--paper)">← Kembali ke galeri</a> <span style="font-size:12px;color:var(--muted);font-weight:600;margin-left:8px">Hai-hai! Halaman buat kirim tautan — galeri cantiknya tetap di index.html ya, semangat!</span></p>
+
+  <!-- SUBMIT -->
+  <section id="kirim" aria-labelledby="kirim-title">
+    <div class="panel">
+      <div class="panel-head">
+        <h3><small>Hai-hai! Kirim tautan — nggak perlu akun kok</small><span id="kirim-title">Kirim tautan foto-tweet gemas</span></h3>
+        <p>Yuk kirim URL foto-tweet Twitter/X yang ada fotonya ya! Kalau duplikat, nanti kita kasih tau kok. Abis kamu kirim, statusnya jadi <b>menunggu persetujuan</b> — belum tampil sebelum Nalania kurasi, sabar ya tetap semangat! Dititipkan penuh cinta oleh Nalania untuk #SeniNala.</p>
+      </div>
+      <div class="panel-body">
+        <form id="submitForm" novalidate class="form-grid">
+          <div style="display:grid;gap:14px">
+            <div class="field">
+              <label for="tweetUrl">URL Tweet <span aria-hidden="true" style="color:var(--field)">*</span></label>
+              <input id="tweetUrl" name="tweetUrl" type="url" inputmode="url" placeholder="https://x.com/nama_akun/status/1234567890123456789" required aria-describedby="urlHelp urlError">
+              <small id="urlHelp">Contoh ya: https://twitter.com/…/status/… atau https://x.com/…/status/… — wajib ada <b>/status/</b> dan fotonya. Semangat!</small>
+              <small id="urlError" class="error" role="alert" hidden></small>
+              <div id="dupWarn" class="notice warn" hidden role="alert"><b>Hai-hai, duplikat ketahuan!</b> URL ini udah ada di galeri atau antrean. Tetap mau kirim aja?</div>
+            </div>
+            <div class="field">
+              <label for="submitNote">Catatan manis (opsional)</label>
+              <textarea id="submitNote" placeholder="Ceritain konteksnya dong, atau kredit yang perlu diperjelas ya…"></textarea>
+            </div>
+            <button class="btn accent" type="submit" style="justify-content:center;padding:13px 16px;font-size:13px;box-shadow:0 3px 0 var(--ink)">Kirim buat dikurasi ya, Roar!</button>
+            <div id="submitOk" class="notice ok" hidden role="status"><b>Roar! Yeay, berhasil terkirim — menunggu persetujuan, tetap semangat ya!</b><br>Hai-hai, tautanmu sudah masuk antrean kurasi Nalania. Tidak tampil publik sebelum disetujui — terima kasih sudah berbagi #SeniNala!</div>
+          </div>
+          <div style="display:grid;gap:12px;align-content:start">
+            <div class="notice">
+              <b>Alurnya gampang kok!</b><br>
+              1) Tempel URL foto-tweet → 2) Kita cek valid &amp; duplikat → 3) <b>menunggu persetujuan Nalania, sabar ya!</b> → 4) Kalau di-approve, foto tampil sebagai embed dengan kredit tetap nempel!
+            </div>
+            <div class="notice dead">
+              <b>Kalau tweet kehapus gimana?</b> Tenang, galeri tetap simpan cuplikan kreditnya (author, caption, snapshot) dan tandai sumber mati — nggak bakal kosong kok!
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <span class="kbd">Validasi</span><span class="kbd">Dedupe</span><span class="kbd">Snapshot</span>
+            </div>
+            <p style="margin:0;font-size:12px;color:var(--muted);font-weight:600;line-height:1.5">Dengan mengirim, kamu bilang kamu boleh share link ini dan setuju kredit fotografer tetap tampil ya. Makasih, tetap semangat!</p>
+          </div>
+        </form>
+        <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px" id="bulkSection">
+          <h4 style="margin:0;font-size:13px;letter-spacing:-.02em;font-weight:800">Kirim massal, sekalian banyak! <span style="font-weight:600;color:var(--muted)">— banyak URL sekaligus, Hai-hai!</span></h4>
+          <p style="margin:6px 0 0;font-size:12px;line-height:1.5;color:var(--muted);font-weight:600">Tempel banyak URL sekaligus (satu per baris, pisah koma atau spasi juga oke) terus klik Periksa ya. Cuma yang valid &amp; unik aja yang masuk antrean kok!</p>
+          <div class="field" style="margin-top:10px">
+            <label for="bulkUrls">Daftar URL gemas</label>
+            <textarea id="bulkUrls" placeholder="https://x.com/nama/status/123&#10;https://x.com/nama/status/456, https://x.com/nama/status/789" rows="5" aria-describedby="bulkHelp"></textarea>
+            <small id="bulkHelp">Baris kosong diabaikan ya. Validasinya sama kayak form tunggal — pakai regex &amp; cek duplikat koleksi, semangat!</small>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button id="bulkValidate" class="btn" type="button">Periksa dulu yuk, Roar!</button>
+            <button id="bulkSubmit" class="btn accent" type="button" hidden>Kirim 0 tautan, yuk!</button>
+          </div>
+          <div id="bulkSummary" aria-live="polite" style="margin-top:10px;font-size:11px;letter-spacing:.04em;font-weight:700;color:var(--muted)"></div>
+          <div id="bulkRows" style="margin-top:8px;display:grid;gap:6px" role="list" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot" role="contentinfo">
+  <div class="foot-inner">
+    <div>
+      <h4>Nala's Gallery — Fanmade · #SeniNala</h4>
+      <p>Hai-hai! Dibuat dengan cinta oleh penggemar untuk penggemar Shabilqis Naila (Nala) JKT48 — <b>Dititipkan penuh cinta oleh Nalania</b>. <b>Fanmade — tidak terafiliasi resmi dengan JKT48 atau agensi mana pun ya.</b> Semua kredit fotografer tetap tampil utuh lewat tautan sumber kok. Unduh HD baru narik file asli pas kamu minta aja. Kurasi mingguan #SeniNala — seni itu art, tetap semangat!</p>
+      <p style="margin-top:10px"><span class="foot-badge" style="background:var(--accent)">#SeniNala · Nalania</span></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+const photos = [];
+const SUBMISSIONS_KEY = "nala-submissions";
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function handleFromUrl(url){
+  const m=String(url).match(/^(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/([^\/]+)\/status\/\d+/i);
+  return m ? m[1] : "";
+}
+function loadSubmissions(){
+  try{ const raw=localStorage.getItem(SUBMISSIONS_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+}
+function saveSubmission(entry){
+  try{
+    const arr=loadSubmissions();
+    arr.push(entry);
+    localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(arr));
+  }catch(e){}
+}
+function saveSubmissionsBulk(entries){
+  try{
+    const arr=loadSubmissions();
+    entries.forEach(en=>arr.push(en));
+    localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(arr));
+  }catch(e){}
+}
+const urlRe = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[A-Za-z0-9_]+\/status\/\d+(\?.*)?$/;
+function isDuplicate(url){
+  const norm = url.trim();
+  if(photos.some(p=>p.tweetUrl===norm)) return true;
+  const stored=loadSubmissions();
+  if(stored.some(s=>s.tweetUrl===norm)) return true;
+  return false;
+}
+$("#submitForm").addEventListener("submit", (e)=>{
+  e.preventDefault();
+  const urlInput = $("#tweetUrl");
+  const err = $("#urlError");
+  const dup = $("#dupWarn");
+  const ok = $("#submitOk");
+  const url = urlInput.value.trim();
+  err.hidden=true; dup.hidden=true; ok.hidden=true;
+  if(!urlRe.test(url)){
+    err.textContent = "Hai-hai, URL belum valid nih — harus format https://x.com/nama/status/angka atau https://twitter.com/nama/status/angka dan ada fotonya ya. Coba lagi, semangat!";
+    err.hidden=false; urlInput.focus(); return;
+  }
+  if(isDuplicate(url)){
+    dup.hidden=false;
+  }
+  const handle=handleFromUrl(url);
+  const entry={tweetUrl:url, handle:handle, caption:"", submittedAt:new Date().toISOString(), status:"pending"};
+  saveSubmission(entry);
+  ok.hidden=false;
+  urlInput.value=""; $("#submitNote").value="";
+  urlInput.focus();
+});
+$("#tweetUrl").addEventListener("input", ()=>{
+  const v=$("#tweetUrl").value.trim();
+  $("#dupWarn").hidden = !v || !isDuplicate(v);
+  $("#urlError").hidden=true;
+});
+let bulkValid=[];
+function parseBulkInput(raw){
+  return raw.split(/[\s,]+/).map(s=>s.trim()).filter(Boolean);
+}
+function renderBulkRows(items){
+  const rows=$("#bulkRows");
+  const summary=$("#bulkSummary");
+  const submitBtn=$("#bulkSubmit");
+  rows.innerHTML="";
+  let valid=0, dupColl=0, dupBatch=0, invalid=0;
+  const seen=new Set();
+  const toSubmit=[];
+  items.forEach((url)=>{
+    const norm=url.trim();
+    let status="", cls="notice";
+    const isValid=urlRe.test(norm);
+    const dupCol=isDuplicate(norm);
+    const dupBatchSeen=seen.has(norm);
+    if(!isValid){
+      status="bukan URL foto-tweet ya, cek lagi";
+      cls="notice warn";
+      invalid++;
+    } else if(dupCol){
+      status="duplikat dari koleksi, udah ada";
+      cls="notice warn";
+      dupColl++;
+    } else if(dupBatchSeen){
+      status="duplikat di batch ini";
+      cls="notice warn";
+      dupBatch++;
+    } else {
+      status="sip, valid!";
+      cls="notice ok";
+      valid++;
+      toSubmit.push(norm);
+      seen.add(norm);
+    }
+    if(isValid && !dupCol && !dupBatchSeen && !seen.has(norm)){
+      seen.add(norm);
+    } else if(isValid && !dupCol && dupBatchSeen){
+      // already counted
+    } else if(isValid && !dupCol && status.startsWith("sip")){
+      // handled
+    } else if(isValid && !dupCol && !dupBatchSeen){
+      // ensure seen for next iteration if not valid path
+    }
+    if(!isValid || dupCol || dupBatchSeen){
+      if(isValid && !dupCol && !seen.has(norm)) seen.add(norm);
+    }
+    const row=document.createElement("div");
+    row.className=cls;
+    row.setAttribute("role","listitem");
+    row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);font-size:11px;line-height:1.4;font-weight:600;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
+    if(cls==="notice ok") row.style.background="var(--field-soft)";
+    const h=handleFromUrl(norm);
+    const detail=h ? ` · @${h}` : "";
+    const left=`<span style="word-break:break-all">${esc(norm)}<br><span style="font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">${esc(status)}${esc(detail)}</span></span>`;
+    const right=status.startsWith("sip") ? `<span style="font-size:10px;font-weight:800;color:var(--field)">✓ sip valid!</span>` : `<span style="font-size:10px;font-weight:800;color:var(--muted)">${esc(status.split("·")[0].trim())}</span>`;
+    row.innerHTML=left+right;
+    rows.appendChild(row);
+  });
+  const totalDup=dupColl+dupBatch;
+  summary.innerHTML=`${valid} sip valid · ${totalDup} duplikat · ${invalid} nggak valid, cek lagi ya<br><span style="font-weight:500;letter-spacing:.02em;text-transform:none">tetap semangat, Roar!</span>`;
+  bulkValid=toSubmit;
+  submitBtn.textContent=`Kirim ${valid} tautan, yuk!`;
+  submitBtn.hidden = valid===0;
+}
+$("#bulkValidate").addEventListener("click", ()=>{
+  const raw=$("#bulkUrls").value;
+  const items=parseBulkInput(raw);
+  if(!items.length){
+    $("#bulkSummary").textContent="Belum ada URL nih, yuk tempel dulu, Roar!";
+    $("#bulkRows").innerHTML="";
+    $("#bulkSubmit").hidden=true;
+    bulkValid=[];
+    return;
+  }
+  renderBulkRows(items);
+});
+$("#bulkSubmit").addEventListener("click", ()=>{
+  if(!bulkValid.length) return;
+  const entries=bulkValid.map(url=>{
+    const h=handleFromUrl(url);
+    return {tweetUrl:url, handle:h, caption:"", submittedAt:new Date().toISOString(), status:"pending"};
+  });
+  saveSubmissionsBulk(entries);
+  const t=document.createElement("div");
+  t.textContent=`Roar! ${bulkValid.length} tautan terkirim — menunggu persetujuan Nalania, tetap semangat!`;
+  t.className="ceria-toast";
+  t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--field);color:var(--paper);padding:10px 14px;border-radius:999px;font-size:12px;font-weight:800;z-index:90;border:1px solid var(--field-deep)";
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2200);
+  $("#bulkUrls").value="";
+  $("#bulkRows").innerHTML="";
+  $("#bulkSummary").innerHTML=`Yeay! ${bulkValid.length} valid terkirim, menunggu persetujuan!`;
+  $("#bulkSubmit").hidden=true;
+  bulkValid=[];
+});
+</script>
+</body>
+</html>

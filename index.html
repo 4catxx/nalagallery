@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Nala's Gallery — Galeri Foto Shabilqis Naila (JKT48) — Fanmade</title>
+<meta name="description" content="Galeri foto fanmade untuk Shabilqis Naila (Nala) JKT48. Karya dari tautan Twitter/X dengan kredit fotografer tetap terjaga. Bukan akun resmi.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+THESIS: Panggung, bukan penampil — web adalah panggung tenang yang membuat foto Nala lebih indah. Foto sebagai tuan rumah, frame menghilang. Ceria tetap kuat (Hai-hai!/Roar! & #SeniNala), gagah dijinakkan di sekitar foto, feminin & seni & pelukis & ghibli diperdalam dengan lembut. Teal tetap pemilik identitas; arsip pusat yang tepercaya.
+OWN-WORLD: Panggung hangat — paper #FFFBF2/sand menahan beban, teal #0E7C86 aksen ~10% (NALA 16vw, mane tipis, seal kecil, garis hairline), lime hanya focus ring + aksi utama. Grid ruang tenang (gap 28px, padding 24px, ground paper), kartu hairline, foto membesar. Surai radial teal di ground paper, tidak menutup foto. Feminin via selotip & wash, indah bukan ramai.
+STORY: Masuk — NALA teal di panggung paper, surai & wash hangat menyambut. Hai-hai! Arsip bernafas: toolbar dengan urut Terbaru/Terlama, grid + stats tepercaya & cahaya golden-hour di tepi & glow di balik Dari Nala; filter lipat, chip menyaring. Ketuk foto — viewer terang/gelap dual-ruang (toggle persisten) yang konsisten dengan urutan & halaman terlihat; ROAR! mini di segel unduh. Kredit serif miring memuliakan pembuat.
+FIRST VIEWPORT: Hero tetap panggung identitas (NALA, mane, voice) — tidak direkomposisi; hanya divider kuas teal-ink tipis memisahkan hero-galeri & grain near-invisible. Di bawahnya toolbar hairline kini dengan urut di dekat search, section-head dengan stats X foto · Y fotografer · diperbarui Z (trust whisper), grid 28px airier, pagination Muat lebih banyak hidden hingga koleksi >12. Pita 10px + brushstroke satu.
+FORM: Seed 5f35e7de mengikat kontrak panggung-arsip ini — teal terkomit #0E7C86/#0A5D64/#E2F2EF, lime dibatasi, satu transisi fluid, microcopy & #SeniNala & DARI NALA & Nalania tetap bold, grain & kuas restrained, warmth tanpa ilustrasi, serif miring, viewer dual-ruang persisten, validasi & arsip (sort Terbaru default, PAGE_SIZE 12, filter→sort→paginate). Validasi, duplikat, persetujuan, arsip tetap.
+unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+<a class="skip" href="#main">Lewati ke konten</a>
+<div class="canvas-grain" aria-hidden="true"></div>
+
+<header class="site-head" role="banner">
+  <a class="brand" href="#galeri" aria-label="Nala's Gallery — kembali ke galeri">
+    <span class="brand-type">
+      <b>Nala's Gallery</b>
+      <span>Shabilqis Naila — JKT48 <em>· fanmade · bukan resmi</em></span>
+    </span>
+  </a>
+  <nav class="head-nav" aria-label="Navigasi utama">
+    <a class="ghost" href="#galeri">Galeri</a>
+    <a class="primary" href="upload.html">Kirim tautan</a>
+  </nav>
+  <span class="meta-counter" id="counter" aria-live="polite">0 foto</span>
+</header>
+
+<!-- HERO + mane radial -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-mane" aria-hidden="true"></div>
+  <div class="hero-field">
+    <p class="sr-only" id="hero-title">Nala's Gallery</p>
+    <h1 class="hero-type" aria-hidden="true">
+      <span>NALA'S</span><span class="stroke">GALLERY</span>
+    </h1>
+    <div class="hero-sub">
+      <div class="hero-copy">
+        <h1>Hai-hai! Koleksi foto <i>Shabilqis Naila</i> pilihan Nalania — kredit fotografer tetap nempel ya!</h1>
+        <p><strong>Roar! Fanmade — bukan akun resmi JKT48 ya.</strong> Semua foto di sini dari tautan Twitter/X yang sudah disetujui Nalania. Pratinjaunya ringan biar ngebut, HD baru diambil pas kamu minta. Punya foto gemas? Kirim link tweet-nya aja, nanti dikurasi dulu, kredit dan caption aslinya tetap tampil utuh kok!</p>
+        <div class="kv" aria-label="Nilai utama">
+          <span class="accent">Kredit tetap nempel</span>
+          <span>Dikurasi Nalania</span>
+          <span>Snapshot disimpan pas approve</span>
+        </div>
+      </div>
+        <div class="hero-spotlight" aria-label="Terbaru dari Nala — sorotan">
+          <div class="spotlight-head" aria-hidden="false">
+            <small>Terbaru dari Nala</small>
+            <strong>Dari Nala sendiri</strong>
+            <span>Foto terbaru pilihan Nala — klik buat buka ya, Hai-hai!</span>
+          </div>
+          <div class="spotlight-grid" id="spotlightGrid" role="list" aria-label="Sorotan: 3 terbaru dari Nala"></div>
+        </div>
+    </div>
+  </div>
+</section>
+<div class="brush-divider" aria-hidden="true"><svg viewBox="0 0 1200 22" preserveAspectRatio="none" aria-hidden="true"><path d="M0 11 C 140 7, 260 15, 380 11 S 620 5, 740 11 S 980 17, 1100 11 L1200 11" stroke="#0E7C86" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".13"/><path d="M0 12 C 180 14, 320 8, 480 12 S 760 16, 900 12 S 1140 10, 1200 12" stroke="#0F0F0E" stroke-width=".7" fill="none" stroke-linecap="round" opacity=".07"/></svg></div>
+<div class="painter-band" aria-hidden="true"></div>
+
+<!-- TOOLBAR -->
+<div class="toolbar" role="search" aria-label="Pencarian dan filter">
+  <div>
+    <label class="sr-only" for="q">Cari</label>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20 16 16"></path></svg>
+      <input id="q" type="search" placeholder="Cari foto, caption, atau fotografer favoritmu…" autocomplete="off" spellcheck="false">
+    </div>
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <label for="sortSel" style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Urutkan</label>
+      <select id="sortSel" aria-label="Urutkan">
+        <option value="newest">Terbaru dulu</option>
+        <option value="oldest">Terlama dulu</option>
+      </select>
+    </div>
+      <div class="search-meta" id="resultMeta" style="margin-top:8px">Hai-hai! Menampilkan 0 dari 0 — ketik buat nyaring ya, semangat!</div>
+  </div>
+  <details class="filter-collapse">
+    <summary class="filter-toggle">Saring — Era &amp; Fotografer</summary>
+    <div class="chips" id="eraChips" role="group" aria-label="Filter era"></div>
+    <div class="chips" id="photoChips" role="group" aria-label="Filter fotografer" style="margin-top:8px"></div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn small" id="clearFilters" type="button">Atur ulang filter yuk!</button>
+      <span style="font-size:12px;color:var(--muted);font-weight:600"><span class="kbd">Tab</span> loncat chip · <span class="kbd">Enter</span> pilih — <span class="kbd">Esc</span> tutup viewer atau filter, semangat!</span>
+    </div>
+  </details>
+</div>
+
+<main id="main" class="shell" role="main">
+  <!-- GALLERY -->
+  <section id="galeri" aria-labelledby="galeri-title">
+    <div class="section-head">
+      <h2><span>Hai-hai! #SeniNala · Galeri pilihan — ringan dulu, HD pas kamu mau ya</span>Foto-foto <em style="font-style:normal;background:var(--accent);padding:0 6px;border-radius:6px;border:1.5px solid var(--ink)">Nala</em> pilihan Nalania — #SeniNala</h2>
+      <div id="statsLine" aria-live="polite" style="font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px;line-height:1.4"></div>
+    </div>
+    <div class="grid" id="grid" role="list" aria-live="polite"></div>
+    <div style="text-align:center;margin-top:18px"><button id="loadMore" class="btn" hidden>Muat lebih banyak lagi yuk, Roar!</button></div>
+    <div id="empty" class="empty" hidden>
+      <b>Hai-hai! Belum ketemu yang cocok — yuk coba lagi ya!</b>
+      <span>Coba ganti kata kunci atau atur ulang filter ya, tetap semangat Roar!</span>
+      <button class="btn small" type="button" onclick="resetFilters()">Atur ulang filter yuk!</button>
+    </div>
+  </section>
+
+  <section id="fotografer" aria-labelledby="fotografer-title" style="margin-top:28px">
+    <div class="section-head" style="margin-bottom:14px">
+      <h2 id="fotografer-title"><span>Roar! Komunitas</span>Para fotografer kece</h2>
+      <p>Mereka yang mengabadikan senyum Nala — yuk intip karyanya, klik kartunya ya!</p>
+    </div>
+    <div id="photographersGrid" class="photographers-grid" role="list" aria-live="polite"></div>
+  </section>
+</main>
+
+<!-- VIEWER -->
+<div id="viewer" class="viewer" data-room="terang" role="dialog" aria-modal="true" aria-label="Penampil foto layar penuh" hidden>
+  <div class="viewer-top">
+    <span class="counter" id="vCounter">1 / 9</span>
+    <span class="era" id="vEra">Era 2024</span>
+    <span style="font-size:12px;font-weight:700;opacity:.9" id="vAuthor">@fotografer_contoh</span>
+    <span class="spacer" aria-hidden="true"></span>
+    <button class="btn small" id="vDownload" type="button" style="background:var(--accent);color:var(--ink);border-color:var(--ink)">Unduh HD</button>
+    <button class="btn small" id="vClose" type="button" aria-label="Tutup penampil" style="background:var(--paper);color:var(--ink)">Tutup <span class="kbd" style="margin-left:6px">Esc</span></button>
+  </div>
+  <div class="viewer-stage" id="viewerStage">
+    <div class="viewer-track" id="viewerTrack" aria-live="polite"></div>
+    <div class="viewer-controls" aria-hidden="false">
+      <button type="button" id="vPrev" aria-label="Foto sebelumnya">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18 9 12l6-6"/></svg>
+      </button>
+      <button type="button" id="vNext" aria-label="Foto selanjutnya">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18 15 12 9 6" transform="translate(0 0)"/><path d="M9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="viewer-bottom">
+    <div class="credit" id="vCredit"></div>
+    <div class="dots" id="vDots" aria-hidden="true"></div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:8px;align-items:center;padding:6px 12px;background:var(--paper);border-top:1px solid var(--line);font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--muted)" aria-hidden="false">
+    <span>← → ganti tweet · , . ganti foto</span><span style="opacity:.6">|</span><span>Esc tutup penampil, semangat!</span>
+  </div>
+</div>
+
+<footer class="site-foot" role="contentinfo">
+  <div class="foot-inner">
+    <div>
+      <h4>Nala's Gallery — Fanmade · #SeniNala</h4>
+      <p>Hai-hai! Dibuat dengan cinta oleh penggemar untuk penggemar Shabilqis Naila (Nala) JKT48 — <b>Dititipkan penuh cinta oleh Nalania</b>. <b>Fanmade — tidak terafiliasi resmi dengan JKT48 atau agensi mana pun ya.</b> Semua kredit fotografer tetap tampil utuh lewat tautan sumber kok. Unduh HD baru narik file asli pas kamu minta aja. Kurasi mingguan #SeniNala — seni itu art, tetap semangat!</p>
+      <p style="margin-top:10px"><span class="foot-badge" style="background:var(--accent)">#SeniNala · Nalania</span></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// MODEL: tweet-as-unit — each item gains a `photos` array; existing single-photo logic keeps working with 1-entry arrays.
+// Real data R1-R3 knowledge remains DOCUMENTED elsewhere; in-code collection is now empty to show only real photos (none supplied yet → honest empty state).
+const photos = [];
+const PAGE_SIZE = 12; // jumlah foto per halaman — 12 terasa arsip, ringan di ponsel; tombol Muat lebih banyak hidden jika <=12
+let sortMode = "newest"; // default Terbaru
+let currentPage = 1;
+let activeFilters = {era:null, photographer:null, q:""};
+let viewerIndex = 0;
+let viewerPhotoIndex = 0; // in-tweet photo pager — distinct from tweet-level index
+let filtered = [...photos];
+let filteredSorted = [...photos];
+let visible = [];
+const monthMap = {Jan:0, Feb:1, Mar:2, Apr:3, Mei:4, Jun:5, Jul:6, Agu:7, Sep:8, Okt:9, Nov:10, Des:11};
+function parseDate(str){
+  if(!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2})\s+(\w+)\s+(\d{4})$/);
+  if(!m) return null;
+  const d = parseInt(m[1],10), mon = monthMap[m[2]], y = parseInt(m[3],10);
+  if(mon===undefined) return null;
+  return new Date(y, mon, d).getTime();
+}
+function getTime(p){
+  const t = parseDate(p.date);
+  return t===null ? null : t;
+}
+function photoCount(list){ return list.reduce((s,p)=>s + (p.photos ? p.photos.length : 1),0); }
+function tweetCount(list){ return list.length; }
+// FRAME_VARIANTS_STABLE_RANDOM: 5 variants — frame-teal (teal penuh honor), frame-ink (ink hairline), frame-mat (paper mat tebal + selotip), frame-lime (aksen lime tipis), frame-wash (wash lembut) — existing tokens only
+const FRAME_VARIANTS = ["frame-teal","frame-ink","frame-mat","frame-lime","frame-wash"];
+function hashString(str){ let h=5381; for(let i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h|=0; } return h; }
+function getFrameVariant(tweet, pid){
+  if(tweet.handle==="Nala_JKT48") return "frame-teal";
+  const key = `${tweet.id}-${pid}`;
+  const h = hashString(String(key));
+  const idx = Math.abs(h) % FRAME_VARIANTS.length;
+  return FRAME_VARIANTS[idx];
+}
+function getFrameVariantByIds(handle, id, pid){
+  if(handle==="Nala_JKT48") return "frame-teal";
+  const key = `${id}-${pid}`;
+  const h = hashString(String(key));
+  const idx = Math.abs(h) % FRAME_VARIANTS.length;
+  return FRAME_VARIANTS[idx];
+}
+// SPOTLIGHT_DERIVATION_RULE: top3 latest photos where handle is Nala_JKT48 sort by tweet date desc take3 LIVE from data grows automatically no filler slots today1 R1
+function getSpotlightPhotos(){
+  const nala = photos.filter(p=>p.handle==="Nala_JKT48");
+  const flat=[];
+  nala.forEach(t=>{
+    const arr = t.photos || [{pid:`${t.id}-1`}];
+    arr.forEach((ph, i)=> flat.push({tweet:t, photo:ph, photoIdx:i, pid:ph.pid || `${t.id}-${i}`, dateMs: getTime(t)}));
+  });
+  flat.sort((a,b)=>{
+    if(a.dateMs===null && b.dateMs===null) return 0;
+    if(a.dateMs===null) return 1;
+    if(b.dateMs===null) return -1;
+    return b.dateMs - a.dateMs;
+  });
+  return flat.slice(0,3);
+}
+function renderSpotlight(){
+  const grid=document.getElementById("spotlightGrid");
+  if(!grid) return;
+  const items=getSpotlightPhotos();
+  grid.innerHTML="";
+  if(items.length===0){
+     grid.innerHTML=`<span style="font-size:12px;color:var(--muted);font-weight:600">Belum ada foto dari Nala — #SeniNala menanti, semangat!</span>`;
+    return;
+  }
+  const spotlightNodes=[];
+  items.forEach(entry=>{
+    const t=entry.tweet, pid=entry.pid;
+    const variant=getFrameVariant(t, pid);
+    const btn=document.createElement("button");
+    btn.type="button";
+    btn.className=`card spotlight ${variant}`;
+    btn.setAttribute("role","listitem");
+    btn.setAttribute("aria-label",`Buka foto ${t.caption.slice(0,40)} oleh ${t.photographer} ${t.date} — DARI NALA`);
+    btn.innerHTML=`
+      <span class="card-media">${svgPlaceholder(t, t.id, entry.photoIdx, {fit:"xMidYMid meet"})}<span class="badge-sintetis" style="background:var(--field);color:var(--paper);border-color:var(--field)">DARI NALA</span></span>
+      <span class="card-body"><span class="card-title">${esc(t.captionReal || t.caption)}</span><span class="card-meta"><span class="meta-pill">${esc(t.date||"")}</span><span class="meta-pill">@${esc(t.handle)}</span></span></span>
+    `;
+    btn.addEventListener("click", ()=> openSpotlightPhoto(t.id, entry.photoIdx));
+    btn.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSpotlightPhoto(t.id, entry.photoIdx); }});
+    grid.appendChild(btn);
+    spotlightNodes.push(btn);
+  });
+  ceriaRevealBatch(spotlightNodes);
+}
+function openSpotlightPhoto(tweetId, photoIdx){
+  let idx=visible.findIndex(p=>p.id===tweetId);
+  if(idx>=0){
+    openViewer(idx);
+    viewerPhotoIndex=photoIdx;
+    const track=document.getElementById("viewerTrack");
+    if(track){
+      const active=track.querySelector(".viewer-photo.active");
+      if(active){
+        const media=active.querySelector(".frame-media");
+        const p=visible[idx];
+        if(media) media.innerHTML=svgPlaceholder(p, p.id, photoIdx, {viewer:true});
+        const vf=active.querySelector(".viewer-frame");
+        if(vf){ vf.className="viewer-frame "+getFrameVariant(p, p.photos[photoIdx] ? p.photos[photoIdx].pid : `${p.id}-${photoIdx}`); }
+        updatePhotoPager();
+        updateDownloadHandler();
+        const pv=document.getElementById("photoPrev");
+        const nx=document.getElementById("photoNext");
+        if(pv) pv.onclick=()=>stepPhoto(-1);
+        if(nx) nx.onclick=()=>stepPhoto(1);
+      }
+    }
+    updateViewerChrome();
+    return;
+  }
+  const masterSorted=[...photos].sort((a,b)=>{ const ta=getTime(a),tb=getTime(b); if(ta===null&&tb===null) return 0; if(ta===null) return 1; if(tb===null) return -1; return tb-ta; });
+  let mIdx=masterSorted.findIndex(p=>p.id===tweetId);
+  if(mIdx>=0){
+    filteredSorted=[...masterSorted];
+    visible=filteredSorted.slice(0, PAGE_SIZE);
+    const vIdx=visible.findIndex(p=>p.id===tweetId);
+    if(vIdx>=0){ openViewer(vIdx); viewerPhotoIndex=photoIdx; renderViewer(); updatePhotoPager(); }
+    else {
+      visible=masterSorted.slice(0, Math.max(PAGE_SIZE, mIdx+1));
+      const v2=visible.findIndex(p=>p.id===tweetId);
+      openViewer(v2>=0?v2:0);
+      viewerPhotoIndex=photoIdx;
+      const tr=document.getElementById("viewerTrack");
+      if(tr){ const ac=tr.querySelector(".viewer-photo.active"); if(ac){ const med=ac.querySelector(".frame-media"); const pp=visible[v2]; if(med) med.innerHTML=svgPlaceholder(pp, pp.id, photoIdx, {viewer:true}); } }
+      updateViewerChrome(); updatePhotoPager(); updateDownloadHandler();
+    }
+  }
+}
+const REPORTS_KEY="nala-reports";
+const REPORTED_KEY="nala-reported";
+function loadReports(){
+  try{ return JSON.parse(localStorage.getItem(REPORTS_KEY)||"{}"); }catch(e){ return {}; }
+}
+function loadReported(){
+  try{ return new Set(JSON.parse(localStorage.getItem(REPORTED_KEY)||"[]")); }catch(e){ return new Set(); }
+}
+let reportCounts=loadReports();
+let reportedSet=loadReported();
+function hasReported(id){ return reportedSet.has(String(id)); }
+function getReportCount(id){ return reportCounts[String(id)]||0; }
+function doReport(id){
+  const sid=String(id);
+  if(hasReported(sid)) return false;
+  reportCounts[sid]=(reportCounts[sid]||0)+1;
+  reportedSet.add(sid);
+  try{
+    localStorage.setItem(REPORTS_KEY, JSON.stringify(reportCounts));
+    localStorage.setItem(REPORTED_KEY, JSON.stringify([...reportedSet]));
+  }catch(e){}
+  return true;
+}
+function showToast(msg){
+  const t=document.createElement("div");
+  t.textContent=msg;
+  t.className="ceria-toast";
+  t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:999px;font-size:12px;font-weight:700;z-index:90;border:1px solid var(--ink)";
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2200);
+}
+// CERIA-ANGGUN: scroll reveal (IntersectionObserver), hero breathing class hook — calm, cheerful-graceful
+let ceriaObserver=null;
+function getCeriaObserver(){
+  if(ceriaObserver) return ceriaObserver;
+  if(typeof IntersectionObserver==="undefined") return null;
+  ceriaObserver=new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add("is-visible");
+        ceriaObserver.unobserve(entry.target);
+      }
+    });
+  },{threshold:0.14, rootMargin:"0px 0px -5% 0px"});
+  return ceriaObserver;
+}
+function ceriaRevealBatch(els){
+  const obs=getCeriaObserver();
+  const reduce=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  els.forEach((el, idx)=>{
+    if(el.classList.contains("reveal")) return;
+    el.classList.add("reveal");
+    const cap=Math.min(idx, 6);
+    if(reduce){
+      el.style.transitionDelay="0ms";
+      el.classList.add("is-visible");
+      return;
+    }
+    el.style.transitionDelay=(cap*46)+"ms";
+    if(obs) obs.observe(el);
+    else el.classList.add("is-visible");
+  });
+}
+function ceriaHeroEnter(){
+  const hc=document.querySelector(".hero-copy");
+  if(!hc) return;
+  const reduce=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce) return;
+  requestAnimationFrame(()=>{ hc.classList.add("ceria-hero-enter"); });
+}
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function svgPlaceholder(p, id, photoIdx, opts){
+  photoIdx = (typeof photoIdx==="number" ? photoIdx : 0);
+  opts = opts || {};
+  const isViewer = !!opts.viewer;
+  const preserve = opts.fit || (isViewer ? "xMidYMid meet" : "xMidYMid slice");
+  const photosLen = p.photos ? p.photos.length : 1;
+  const bg = p.deleted ? "#E8DDD0" : (p.accent === "#0F0F0E" ? "#1B1B19" : p.accent === "#E8FF2E" ? "#E8FF2E" : p.palette[0] || "#0E7C86");
+  const fg = (bg === "#0F0F0E" || bg === "#1B1B19" || bg === "#0E7C86") ? "#FFFBF2" : "#0F0F0E";
+  const orientTag = p.id===10 ? (photoIdx===0 ? "16:9 LANDSCAPE" : photoIdx===1 ? "9:16 PORTRAIT" : "1:1 SQUARE") : "";
+  const idLabel = p.isReal ? `FOTO MENYUSUL` : `SINTETIS #${id}` + (orientTag ? ` · ${orientTag}` : "") + (photosLen>1 ? ` · ${photoIdx+1}/${photosLen}` : "");
+  const motifs = {
+    1: `<circle cx="320" cy="300" r="132" fill="${fg}" opacity=".14"/><circle cx="320" cy="308" r="86" fill="none" stroke="${fg}" stroke-width="3" opacity=".9"/><text x="320" y="318" text-anchor="middle" font-size="22" font-weight="950" letter-spacing="-.04em" fill="${fg}">NALA</text>`,
+    2: `<rect x="120" y="180" width="400" height="260" rx="18" fill="${fg}" opacity=".12"/><rect x="150" y="206" width="340" height="208" rx="14" fill="none" stroke="${fg}" stroke-width="2.2"/><text x="320" y="330" text-anchor="middle" font-size="18" font-weight="900" fill="${fg}" letter-spacing=".08em">TOWEL 2024</text>`,
+    3: `<circle cx="320" cy="320" r="110" fill="none" stroke="${fg}" stroke-width="2.5" stroke-dasharray="10 8"/><circle cx="320" cy="320" r="62" fill="${fg}" opacity=".14"/><text x="320" y="328" text-anchor="middle" font-size="20" font-weight="950" fill="${fg}">DEBUT</text>`,
+    4: `<rect x="90" y="140" width="460" height="340" rx="20" fill="${fg}" opacity=".10"/><circle cx="320" cy="310" r="74" fill="${fg}"/><text x="320" y="318" text-anchor="middle" font-size="13" font-weight="900" fill="${bg}" letter-spacing=".1em">UCHIWA</text>`,
+    5: `<g opacity=".55"><line x1="0" y1="0" x2="640" y2="800" stroke="${fg}" stroke-width="1" opacity=".18"/><line x1="640" y1="0" x2="0" y2="800" stroke="${fg}" stroke-width="1" opacity=".18"/></g><rect x="160" y="220" width="320" height="320" rx="22" fill="none" stroke="${fg}" stroke-width="2" stroke-dasharray="12 8" opacity=".9"/><text x="320" y="392" text-anchor="middle" font-size="14" font-weight="900" fill="${fg}" letter-spacing=".12em">ARSIP</text>`,
+    6: `<rect x="110" y="170" width="420" height="280" rx="16" fill="${fg}" opacity=".13"/><circle cx="220" cy="300" r="46" fill="none" stroke="${fg}" stroke-width="2"/><circle cx="420" cy="300" r="46" fill="none" stroke="${fg}" stroke-width="2"/><text x="320" y="400" text-anchor="middle" font-size="12" font-weight="800" fill="${fg}" letter-spacing=".14em">CANDID</text>`,
+    7: `<rect x="140" y="160" width="360" height="320" rx="18" fill="none" stroke="${fg}" stroke-width="3"/><text x="320" y="300" text-anchor="middle" font-size="34" font-weight="950" fill="${fg}" letter-spacing="-.05em">NALA</text><text x="320" y="338" text-anchor="middle" font-size="11" font-weight="850" fill="${fg}" letter-spacing=".18em">NUMBER TAG</text>`,
+    8: `<ellipse cx="320" cy="310" rx="140" ry="108" fill="${fg}" opacity=".12"/><ellipse cx="320" cy="310" rx="88" ry="68" fill="none" stroke="${fg}" stroke-width="2"/><text x="320" y="320" text-anchor="middle" font-size="13" font-weight="900" fill="${fg}" letter-spacing=".14em">GOLDEN HOUR</text>`,
+    9: `<rect x="100" y="150" width="440" height="300" rx="20" fill="${fg}" opacity=".11"/><text x="320" y="298" text-anchor="middle" font-size="26" font-weight="950" fill="${fg}">ENCORE</text><circle cx="320" cy="352" r="10" fill="${fg}" opacity=".9"/>`,
+  };
+  // DEMO tweet id 10 — 3 orientations: wide 16:9 slice, tall 9:16, square — SINTETIS — viewBox varies, preserve toggles slice/meet per surface
+  const demoConfigs = {
+    0: { vb:"0 0 640 360", motif:`<rect x="40" y="40" width="560" height="280" rx="20" fill="${fg}" opacity=".10"/><circle cx="320" cy="160" r="68" fill="${fg}"/><text x="320" y="168" text-anchor="middle" font-size="12" font-weight="900" fill="${bg}" letter-spacing=".08em">POSE PANGGUNG</text><text x="320" y="190" text-anchor="middle" font-size="9" font-weight="800" fill="${fg}" letter-spacing=".12em">16:9 LANDSCAPE · 1/3 · SINTETIS</text><text x="320" y="310" text-anchor="middle" font-size="10" font-weight="800" fill="${fg}">— wide panorama letterboxed in viewer —</text>` },
+    1: { vb:"0 0 360 640", motif:`<rect x="30" y="40" width="300" height="420" rx="18" fill="${fg}" opacity=".12"/><circle cx="180" cy="210" r="56" fill="none" stroke="${fg}" stroke-width="2"/><circle cx="180" cy="214" r="32" fill="${fg}" opacity=".18"/><text x="180" y="340" text-anchor="middle" font-size="10" font-weight="800" fill="${fg}" letter-spacing=".10em">CANDID TAWA</text><text x="180" y="358" text-anchor="middle" font-size="8" font-weight="800" fill="${fg}" letter-spacing=".08em">9:16 PORTRAIT · 2/3 · SINTETIS</text><text x="180" y="590" text-anchor="middle" font-size="9" font-weight="700" fill="${fg}">— tall portrait uncropped —</text>` },
+    2: { vb:"0 0 640 640", motif:`<rect x="60" y="60" width="520" height="400" rx="20" fill="${fg}" opacity=".10"/><text x="320" y="260" text-anchor="middle" font-size="26" font-weight="950" fill="${fg}">ENCORE</text><text x="320" y="288" text-anchor="middle" font-size="10" font-weight="800" fill="${fg}" letter-spacing=".12em">1:1 SQUARE · 3/3 · SINTETIS</text><circle cx="320" cy="340" r="10" fill="${fg}" opacity=".9"/><text x="320" y="560" text-anchor="middle" font-size="10" font-weight="700" fill="${fg}">— square tidy —</text>` }
+  };
+  let vb = "0 0 640 800";
+  let motif;
+  if(p.id===10){
+    const cfg = demoConfigs[photoIdx] || demoConfigs[0];
+    vb = cfg.vb;
+    motif = cfg.motif;
+  } else {
+    motif = motifs[id] || motifs[1];
+  }
+  const photoSuffix = photosLen>1 ? ` — Foto ${photoIdx+1} dari ${photosLen} · ${orientTag}` : (p.id===10 ? ` · ${orientTag}` : ``);
+  const vbW = vb.split(" ")[2], vbH = vb.split(" ")[3];
+  return `<svg viewBox="${vb}" preserveAspectRatio="${preserve}" role="img" aria-label="${esc(p.caption)}${photoSuffix} — ${p.isReal ? `foto menyusul, kredit real` : `sintetis placeholder`}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${vbW}" height="${vbH}" rx="18" fill="${bg}"/>
+    ${motif}
+    <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif">
+      <rect x="18" y="18" width="${p.isReal ? 156 : (p.id===10 ? 210 : 148)}" height="26" rx="13" fill="${p.isReal ? `#FFFBF2` : `#E8FF2E`}" stroke="#0F0F0E" stroke-width="1.4"/>
+      <text x="${p.isReal ? 96 : (p.id===10 ? 123 : 92)}" y="35.5" text-anchor="middle" font-size="10.5" font-weight="900" letter-spacing=".09em" fill="#0F0F0E">${idLabel}</text>
+    </g>
+    ${p.deleted ? `<g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif"><rect x="18" y="${parseInt(vbH)-42}" width="214" height="24" rx="12" fill="#0F0F0E"/><text x="125" y="${parseInt(vbH)-26}" text-anchor="middle" font-size="10" font-weight="850" letter-spacing=".06em" fill="#FFFBF2">SUMBER MATI</text></g>` : ``}
+  </svg>`;
+}
+function applyFilters(){
+  const q = activeFilters.q.trim().toLowerCase();
+  filtered = photos.filter(p=>{
+    if(activeFilters.era && p.era !== activeFilters.era) return false;
+    if(activeFilters.photographer && p.photographer !== activeFilters.photographer) return false;
+    if(q){
+      const hay = `${p.caption} ${p.photographer} ${p.era} ${p.handle||''}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  filteredSorted = [...filtered].sort((a,b)=>{
+    const ta=getTime(a), tb=getTime(b);
+    if(ta===null && tb===null) return 0;
+    if(ta===null) return 1;
+    if(tb===null) return -1;
+    return sortMode==="newest" ? tb - ta : ta - tb;
+  });
+  currentPage = 1;
+  visible = filteredSorted.slice(0, PAGE_SIZE);
+  renderGrid();
+  updateMeta();
+  updateStats();
+  syncChips();
+  updateLoadMore();
+}
+function updateLoadMore(){
+  const btn=$("#loadMore");
+  if(!btn) return;
+  const total=filteredSorted.length;
+  const shown=visible.length;
+  btn.hidden = shown >= total || total <= PAGE_SIZE;
+}
+function updateStats(){
+  const tweetTotal=tweetCount(photos);
+  const photoTotal=photoCount(photos);
+  const uniq=new Set(photos.map(p=>p.handle).filter(Boolean)).size;
+  let newest=null, newestTime=-Infinity;
+  photos.forEach(p=>{
+    const t=getTime(p);
+    if(t!==null && t>newestTime){ newestTime=t; newest=p.date; }
+  });
+  const el=$("#statsLine");
+  if(!el) return;
+  const dateStr=newest || "—";
+  // graceful empty: photoTotal 0, uniq 0, dateStr "—" must not crash; required phrase "0 foto · 0 fotografer · diperbarui —" must appear verbatim when empty
+  el.innerHTML=`${photoTotal} foto · ${uniq} fotografer · diperbarui ${esc(dateStr)}<br><span style="font-weight:500;letter-spacing:.04em;text-transform:none;color:var(--muted)">tetap semangat, Roar!</span>`;
+}
+function renderGrid(){
+  const grid = $("#grid");
+  const empty = $("#empty");
+  grid.innerHTML = "";
+  if(filteredSorted.length===0){ empty.hidden=false; updateLoadMore(); return; }
+  empty.hidden=true;
+  const ceriaGridNodes=[];
+  visible.forEach((p, idx)=>{
+    const nPhotos = p.photos ? p.photos.length : 1;
+    const extra = nPhotos>1 ? `+${nPhotos-1} foto` : ``;
+    const el = document.createElement("article");
+    const cardVariant = getFrameVariant(p, (p.photos && p.photos[0] && p.photos[0].pid) ? p.photos[0].pid : `${p.id}-1`);
+    el.className = "card " + cardVariant + (p.deleted ? " is-dead" : "") + (nPhotos>1 ? " has-multi" : "");
+    el.setAttribute("role","listitem");
+    el.innerHTML = `
+      <div class="card-media">
+        ${p.isReal ? `<span class="badge-sintetis" style="${p.badge==='DARI NALA' ? `background:var(--field);color:var(--paper)` : `background:var(--paper);color:var(--muted)`}">${esc(p.badge)}</span>` : `<span class="badge-sintetis">SINTETIS</span>`}
+        ${nPhotos>1 ? `<span class="badge-multi" aria-label="${nPhotos} foto dalam tweet">+${nPhotos-1} foto</span>` : ``}
+        ${svgPlaceholder(p, p.id, 0)}
+        ${p.deleted ? `<div class="badge-dead"><span>Cuplikan tersimpan — sumber mati</span><span style="background:var(--accent);color:var(--ink);padding:3px 7px;border-radius:999px;font-size:10px;border:1px solid var(--ink)">ARSIP</span></div>` : ``}
+      </div>
+      <div class="card-body">
+        <p class="card-title">${esc(p.caption)}</p>
+        <div class="card-meta">
+          <span class="meta-pill">${esc(p.era)}</span>
+          ${p.date ? `<span class="meta-pill">${esc(p.date)}</span>` : ``}
+          <span class="meta-pill curated-pill">Dikurasi ${esc(p.curatedAt||"—")}</span>
+          ${p.isReal ? `<span class="meta-pill" style="background:var(--paper);border-color:var(--ink)">${p.badge==='DARI NALA' ? `DARI NALA` : `FOTO MENYUSUL`}</span>` : ``}
+          ${nPhotos>1 ? `<span class="meta-pill" style="background:var(--paper);border-color:var(--ink)">`+esc(extra)+`</span>` : ``}
+          ${p.deleted ? `<span class="meta-pill" style="background:var(--ink);color:var(--paper);border-color:var(--ink)">Sumber mati</span>` : (p.isReal ? `` : `<span class="meta-pill">HD on demand</span>`)}
+          ${getReportCount(p.id)>0 ? `<span class="reported-flag">Dilaporkan · ${getReportCount(p.id)}</span>` : ``}
+        </div>
+        <div class="card-actions">
+          <button class="btn primary block open" type="button" data-open="${idx}" aria-label="Buka tweet ${p.id} oleh ${p.photographer} — ${nPhotos} foto — ${p.caption.slice(0,40)}">Buka <span aria-hidden="true">→</span></button>
+        </div>
+        <a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" class="meta-pill" style="text-decoration:underline;text-underline-offset:3px;text-align:center;display:block">${p.deleted ? `Sumber asli (mati) — cuplikan disimpan` : `Sumber asli`} ↗</a>
+        <div style="text-align:center;margin-top:4px">${p.deleted ? `` : `<button class="report-link" data-report="${p.id}" ${hasReported(p.id) ? `disabled` : ``}>${hasReported(p.id) ? `Sudah dilaporkan, makasih ya!` : `Laporkan link mati`}</button>`}</div>
+      </div>
+    `;
+    grid.appendChild(el);
+    ceriaGridNodes.push(el);
+  });
+  ceriaRevealBatch(ceriaGridNodes);
+  grid.querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click", ()=> openViewer(parseInt(btn.getAttribute("data-open"),10)));
+  });
+  grid.querySelectorAll("[data-report]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id=btn.getAttribute("data-report");
+      if(doReport(id)){
+        showToast("Hai-hai, makasih ya — Nalania bakal tinjau, tetap semangat!");
+        btn.textContent="Sudah dilaporkan, makasih ya!";
+        btn.disabled=true;
+        renderGrid();
+        updateStats();
+        renderPhotographers();
+      } else {
+        showToast("Udah kamu laporkan kok, makasih ya!");
+      }
+    });
+  });
+  const totalPhotosAll = photoCount(photos);
+  const totalTweetsAll = tweetCount(photos);
+  $("#counter").textContent = `${totalPhotosAll} foto dari ${totalTweetsAll} tweet`;
+}
+function updateMeta(){
+  const totalTweets = filteredSorted.length;
+  const shownTweets = visible.length;
+  const totalPhotosFiltered = photoCount(filteredSorted);
+  const shownPhotos = photoCount(visible);
+  const q = activeFilters.q ? ` · kata kunci “${activeFilters.q}”` : "";
+  const f = (activeFilters.era || activeFilters.photographer) ? ` · filter aktif` : "";
+  const s = sortMode==="newest" ? "Terbaru" : "Terlama";
+  // graceful empty: must read "Menampilkan 0 dari 0" bilingual; operates sanely on empty (no errors; load-more hidden elsewhere)
+  $("#resultMeta").textContent = `Hai-hai! Menampilkan ${shownTweets} dari ${totalTweets} — ${shownPhotos} foto · ${s}${q}${f} — ${shownTweets===0 ? "belum ada yang cocok, coba lagi ya!" : "ketuk Buka buat lihat penuh ya!"}`;
+}
+function buildChips(){
+  const eras = [...new Set(photos.map(p=>p.era))];
+  const photographers = [...new Set(photos.map(p=>p.photographer))];
+  const eraWrap = $("#eraChips");
+  const phoWrap = $("#photoChips");
+  eraWrap.innerHTML = ""; phoWrap.innerHTML = "";
+  [{label:"Semua Era, yuk!", value:null, wrap:eraWrap, key:"era"}, ...eras.map(e=>({label:e, value:e, wrap:eraWrap, key:"era"}))].forEach(item=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="chip"; b.textContent=item.label;
+    b.setAttribute("aria-pressed", String(activeFilters[item.key]===item.value || (item.value===null && !activeFilters[item.key])));
+    b.addEventListener("click", ()=>{ activeFilters[item.key]=item.value; applyFilters(); });
+    item.wrap.appendChild(b);
+  });
+  [{label:"Semua fotografer, Hai-hai!", value:null, wrap:phoWrap, key:"photographer"}, ...photographers.map(p=>({label:p, value:p, wrap:phoWrap, key:"photographer"}))].forEach(item=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="chip accent"; b.textContent=item.label;
+    b.setAttribute("aria-pressed", String(activeFilters[item.key]===item.value || (item.value===null && !activeFilters[item.key])));
+    b.addEventListener("click", ()=>{ activeFilters[item.key]=item.value; applyFilters(); });
+    item.wrap.appendChild(b);
+  });
+}
+function syncChips(){ buildChips(); }
+function resetFilters(){ activeFilters={era:null, photographer:null, q:""}; $("#q").value=""; applyFilters(); }
+function getPhotographers(){
+  const map=new Map();
+  photos.forEach(p=>{
+    const key=p.handle;
+    if(!key) return;
+    const nPhotos = p.photos ? p.photos.length : 1;
+    const existing=map.get(key);
+    if(existing){ existing.count += nPhotos; existing.tweets += 1; }
+    else {
+      const isNala = key==="Nala_JKT48";
+      map.set(key, {handle:key, displayName:p.photographer, count:nPhotos, tweets:1, isNala});
+    }
+  });
+  const arr=[...map.values()];
+  arr.sort((a,b)=>{
+    if(a.isNala) return -1;
+    if(b.isNala) return 1;
+    return b.count - a.count;
+  });
+  return arr;
+}
+function renderPhotographers(){
+  const grid=$("#photographersGrid");
+  if(!grid) return;
+  const list=getPhotographers();
+  grid.innerHTML="";
+  if(list.length===0){
+    grid.innerHTML=`<span style="font-size:13px;color:var(--muted);font-weight:600;line-height:1.5">Belum ada fotografer — jadilah yang pertama menitipkan foto yuk!</span>`;
+    return;
+  }
+  const ceriaPhotoNodes=[];
+  list.forEach(entry=>{
+    const card=document.createElement("button");
+    card.type="button";
+    card.className="photographer-card";
+    card.setAttribute("role","listitem");
+    card.setAttribute("aria-label",`Lihat foto-foto kece oleh ${entry.displayName} @${entry.handle} — ${entry.count} foto, yuk!`);
+    const initials=entry.displayName.trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join("").slice(0,2) || entry.handle.slice(0,2).toUpperCase();
+    card.innerHTML=`
+      <span class="photographer-avatar" aria-hidden="true">${esc(initials)}</span>
+      <span class="photographer-info">
+        <span class="photographer-name">${esc(entry.displayName)}</span>
+        <span class="photographer-handle"><a href="https://x.com/${esc(entry.handle)}" target="_blank" rel="noopener noreferrer" tabindex="-1" onclick="event.stopPropagation()">@${esc(entry.handle)}</a></span>
+      </span>
+      <span class="photographer-count">${entry.count} foto</span>
+      ${entry.isNala ? `<span class="photographer-seal">DARI NALA</span>` : ``}
+    `;
+    card.addEventListener("click", ()=>{
+      activeFilters.photographer = entry.displayName;
+      applyFilters();
+      const details=document.querySelector(".filter-collapse");
+      if(details && !details.open) details.open=true;
+      document.getElementById("galeri")?.scrollIntoView({behavior:"smooth", block:"start"});
+    });
+    grid.appendChild(card);
+    ceriaPhotoNodes.push(card);
+  });
+  ceriaRevealBatch(ceriaPhotoNodes);
+}
+function openViewer(realIdx){
+  viewerIndex = realIdx;
+  viewerPhotoIndex = 0;
+  const v = $("#viewer");
+  v.hidden=false;
+  requestAnimationFrame(()=>{
+    v.classList.add("open");
+    renderViewer(true);
+  });
+  document.body.style.overflow="hidden";
+  $("#vClose").focus();
+  document.addEventListener("keydown", viewerKeys);
+}
+function closeViewer(){
+  const v = $("#viewer");
+  v.classList.remove("open");
+  setTimeout(()=>{ v.hidden=true; document.body.style.overflow=""; }, 220);
+  document.removeEventListener("keydown", viewerKeys);
+  const btn = document.querySelector(`[data-open="${viewerIndex}"]`);
+  if(btn) btn.focus();
+}
+function viewerKeys(e){
+  if(e.key==="Escape") closeViewer();
+  // Arrow keys stay tweet-level — distinct from in-tweet , . keys
+  if(e.key==="ArrowLeft") stepViewer(-1);
+  if(e.key==="ArrowRight") stepViewer(1);
+  // , . for in-tweet photos — DISTINCT from tweet arrows
+  if(e.key==="," || e.key==="<") stepPhoto(-1);
+  if(e.key==="." || e.key===">") stepPhoto(1);
+}
+function stepViewer(dir){
+  const n = visible.length;
+  if(n===0) return;
+  const next = (viewerIndex + dir + n) % n;
+  const outClass = dir>0 ? "exit-left" : "enter-right";
+  const track = $("#viewerTrack");
+  const cur = track.querySelector(".viewer-photo.active");
+  if(cur){ cur.classList.remove("active"); cur.classList.add(outClass); setTimeout(()=>cur.remove(), 520); }
+  viewerIndex = next;
+  viewerPhotoIndex = 0;
+  const incoming = buildViewerPhoto(visible[viewerIndex], viewerIndex, viewerPhotoIndex);
+  incoming.classList.add("enter-right");
+  track.appendChild(incoming);
+  requestAnimationFrame(()=> requestAnimationFrame(()=>{
+    incoming.classList.remove("enter-right");
+    incoming.classList.add("active");
+    updateViewerChrome();
+  }));
+  if(cur) setTimeout(()=>{ if(cur.parentNode) cur.remove(); }, 600);
+  if(!cur){
+    incoming.classList.remove("enter-right");
+    incoming.classList.add("active");
+    updateViewerChrome();
+  }
+}
+function stepPhoto(dir){
+  const p = visible[viewerIndex];
+  if(!p) return;
+  const nPhotos = p.photos ? p.photos.length : 1;
+  if(nPhotos<=1) return;
+  viewerPhotoIndex = (viewerPhotoIndex + dir + nPhotos) % nPhotos;
+  const track = $("#viewerTrack");
+  const active = track.querySelector(".viewer-photo.active");
+  if(!active) return;
+   const media = active.querySelector(".frame-media");
+  if(media) media.innerHTML = svgPlaceholder(p, p.id, viewerPhotoIndex, {viewer:true});
+  const vf = active.querySelector(".viewer-frame");
+  if(vf){
+    const pid2 = (p.photos && p.photos[viewerPhotoIndex] && p.photos[viewerPhotoIndex].pid) ? p.photos[viewerPhotoIndex].pid : `${p.id}-${viewerPhotoIndex+1}`;
+    vf.className = "viewer-frame " + getFrameVariant(p, pid2);
+  }
+  updatePhotoPager();
+  updateDownloadHandler();
+}
+function updatePhotoPager(){
+  const p = visible[viewerIndex];
+  if(!p) return;
+  const nPhotos = p.photos ? p.photos.length : 1;
+  const label = document.getElementById("photoCounter");
+  const dots = document.getElementById("photoDots");
+  const prevBtn = document.getElementById("photoPrev");
+  const nextBtn = document.getElementById("photoNext");
+  if(label){
+    if(nPhotos>1) label.textContent = `Foto ${viewerPhotoIndex+1} dari ${nPhotos}`;
+    else label.textContent = `1 foto`;
+  }
+  if(dots){
+    if(nPhotos>1) dots.innerHTML = p.photos.map((_,i)=>`<span class="dot photo-dot ${i===viewerPhotoIndex ? "on":""}" aria-hidden="true"></span>`).join("");
+    else dots.innerHTML = ``;
+  }
+  if(prevBtn) prevBtn.disabled = nPhotos<=1;
+  if(nextBtn) nextBtn.disabled = nPhotos<=1;
+}
+function updateDownloadHandler(){
+  const p = visible[viewerIndex];
+  if(!p) return;
+  const nPhotos = p.photos ? p.photos.length : 1;
+  $("#vDownload").onclick = ()=>{
+    const svg = svgPlaceholder(p, p.id, viewerPhotoIndex, {viewer:true});
+    const blob = new Blob([svg], {type:"image/svg+xml"});
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download=`nala-gallery-${p.isReal ? p.handle : `sintetis`}-${p.id}-foto${viewerPhotoIndex+1}.svg`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 800);
+    const t=document.createElement("div");
+    t.className="ceria-toast";
+    if(nPhotos>1) t.textContent=`Roar! Mengunduh Foto ${viewerPhotoIndex+1} dari ${nPhotos} — semangat!`;
+    else t.textContent="Roar! Mengunduh HD (simulasi sintetis) — semangat!";
+    t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--accent);color:var(--ink);border:1.5px solid var(--ink);padding:10px 14px;border-radius:999px;font-weight:900;font-size:12px;z-index:90;box-shadow:var(--shadow-card)";
+    document.body.appendChild(t); setTimeout(()=>t.remove(), 2200);
+  };
+}
+function buildViewerPhoto(p, idx, photoIdx){
+  photoIdx = (typeof photoIdx==="number" ? photoIdx : viewerPhotoIndex);
+  const nPhotos = p.photos ? p.photos.length : 1;
+  const d=document.createElement("div");
+  d.className="viewer-photo";
+  d.setAttribute("role","group");
+  d.setAttribute("aria-label",`Tweet ${idx+1} dari ${visible.length} — Foto ${photoIdx+1} dari ${nPhotos} — ${p.caption}`);
+  const pidForFrame = (p.photos && p.photos[photoIdx] && p.photos[photoIdx].pid) ? p.photos[photoIdx].pid : `${p.id}-${photoIdx+1}`;
+  const vVariant = getFrameVariant(p, pidForFrame);
+  d.innerHTML=`
+    <div class="viewer-frame ${vVariant}">
+      <div class="frame-media">${svgPlaceholder(p, p.id, photoIdx, {viewer:true})}</div>
+      ${nPhotos>1 ? `<div class="photo-pager" aria-label="Pager foto dalam tweet">
+        <button type="button" class="photo-nav" id="photoPrev" aria-label="Foto sebelumnya dalam tweet">‹</button>
+        <span class="photo-counter" id="photoCounter">Foto ${photoIdx+1} dari ${nPhotos}</span>
+        <span class="photo-dots" id="photoDots">${p.photos.map((_,i)=>`<span class="dot photo-dot ${i===photoIdx ? "on":""}" aria-hidden="true"></span>`).join("")}</span>
+        <button type="button" class="photo-nav" id="photoNext" aria-label="Foto selanjutnya dalam tweet">›</button>
+      </div>` : ``}
+      <div class="frame-bar">
+        <div>
+          <div class="author">${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``} <span style="font-weight:600;color:var(--muted)">· ${esc(p.era)}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${p.isReal ? `<span style="background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">${esc(p.badge)}</span>` : `<span style="background:var(--paper);color:var(--muted);border:1px solid var(--line);padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">SINTETIS</span>`} <span class="meta-pill curated-pill" style="margin-left:6px">Dikurasi ${esc(p.curatedAt||"—")}</span></div>
+          <div class="caption">${esc(p.caption)}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <a class="link" href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer">${p.deleted ? "Sumber mati — lihat cuplikan ya" : "Buka sumber asli ya"} ↗</a>
+           ${p.deleted ? `` : `<button class="report-link" data-report-viewer="${p.id}" ${hasReported(p.id) ? `disabled` : ``}>${hasReported(p.id) ? `Sudah dilaporkan, makasih ya!` : `Laporkan link mati`}</button>`}
+        </div>
+      </div>
+    </div>
+  `;
+  return d;
+}
+function renderViewer(first){
+  const track = $("#viewerTrack");
+  track.innerHTML="";
+  if(!visible.length) return;
+  const node = buildViewerPhoto(visible[viewerIndex], viewerIndex, viewerPhotoIndex);
+  node.classList.add("active");
+  track.appendChild(node);
+  updateViewerChrome();
+  // bind in-tweet photo nav DISTINCT from tweet arrows (small dots under photo; keyboard , . for in-tweet photos, arrows stay tweet-level)
+  const pv = document.getElementById("photoPrev");
+  const nx = document.getElementById("photoNext");
+  if(pv) pv.addEventListener("click", ()=> stepPhoto(-1));
+  if(nx) nx.addEventListener("click", ()=> stepPhoto(1));
+}
+function updateViewerChrome(){
+  const p = visible[viewerIndex];
+  if(!p) return;
+  const nPhotos = p.photos ? p.photos.length : 1;
+  $("#vCounter").textContent = `${viewerIndex+1} / ${visible.length}`;
+  $("#vEra").textContent = p.era;
+  $("#vAuthor").textContent = p.isReal && p.handle ? `@${p.handle}` : p.photographer;
+  $("#vCredit").innerHTML = `<b>${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``}</b> <span>— ${esc(p.caption.slice(0,88))}${p.caption.length>88 ? "…" : ""}${p.date ? ` · ${esc(p.date)}` : ``}</span> <a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;color:var(--accent)">${p.deleted ? "sumber mati (cuplikan disimpan)" : "sumber"} ↗</a> ${p.isReal ? `<span style="opacity:.9;background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:1px 6px;border-radius:999px;font-size:10px;font-weight:900">· ${esc(p.badge)}</span>` : `<span style="opacity:.7">· SINTETIS</span>`} ${nPhotos>1 ? `<span style="opacity:.9;background:var(--paper);border:1px solid var(--line);padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700">· Foto ${viewerPhotoIndex+1} dari ${nPhotos}</span>` : ``}`;
+  const dots = $("#vDots");
+  dots.innerHTML = visible.map((_,i)=>`<span class="dot ${i===viewerIndex ? "on":""}" aria-hidden="true"></span>`).join("");
+  updatePhotoPager();
+  updateDownloadHandler();
+  const vrBtn=document.querySelector("[data-report-viewer]");
+  if(vrBtn){
+    vrBtn.addEventListener("click", ()=>{
+      const id=vrBtn.getAttribute("data-report-viewer");
+      if(doReport(id)){
+        showToast("Hai-hai, makasih ya — Nalania bakal tinjau, tetap semangat!");
+        vrBtn.textContent="Sudah dilaporkan, makasih ya!";
+        vrBtn.disabled=true;
+        renderGrid();
+        updateStats();
+        renderPhotographers();
+        renderViewer();
+      } else {
+        showToast("Udah kamu laporkan kok, makasih ya!");
+      }
+    });
+  }
+  // re-bind photo nav after chrome update (dots remain)
+  const pv = document.getElementById("photoPrev");
+  const nx = document.getElementById("photoNext");
+  if(pv) pv.onclick = ()=> stepPhoto(-1);
+  if(nx) nx.onclick = ()=> stepPhoto(1);
+}
+$("#q").addEventListener("input", (e)=>{ activeFilters.q=e.target.value; applyFilters(); });
+$("#sortSel").addEventListener("change", (e)=>{ sortMode=e.target.value; applyFilters(); });
+$("#loadMore").addEventListener("click", ()=>{
+  currentPage++;
+  visible = filteredSorted.slice(0, currentPage * PAGE_SIZE);
+  renderGrid();
+  updateMeta();
+  updateLoadMore();
+  // ceriaRevealBatch handles newly appended pages via renderGrid; no replay of visible ones
+});
+$("#clearFilters").addEventListener("click", resetFilters);
+$("#vClose").addEventListener("click", closeViewer);
+$("#viewer").addEventListener("click", (e)=>{ if(e.target===$("#viewer")) closeViewer(); });
+$("#vPrev").addEventListener("click", ()=> stepViewer(-1));
+$("#vNext").addEventListener("click", ()=> stepViewer(1));
+/* collapsible filter + Esc: closes whenever open (viewer takes priority) */
+const filterDetails = document.querySelector(".filter-collapse");
+document.addEventListener("keydown", (e)=>{
+  if(e.key==="Escape" && filterDetails && filterDetails.open && !document.querySelector(".viewer.open")){
+    const ae = document.activeElement;
+    const inside = ae && filterDetails.contains(ae);
+    filterDetails.open = false;
+    if(inside) filterDetails.querySelector("summary")?.focus();
+  }
+});
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="/" && !$("#viewer").classList.contains("open") && document.activeElement?.tagName!=="INPUT" && document.activeElement?.tagName!=="TEXTAREA"){
+    e.preventDefault(); $("#q").focus();
+  }
+});
+ceriaHeroEnter();
+renderPhotographers();
+applyFilters();
+renderSpotlight();
+</script>
+</body>
+</html>
