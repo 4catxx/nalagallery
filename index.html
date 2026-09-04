@@ -519,9 +519,15 @@ function svgPlaceholder(p, id, photoIdx, opts){
   </svg>`;
 }
 // OPSI_C_GALLERY_PHOTO_PIPELINE: real <img> when image_url_large/_orig exists else FOTO MENYUSUL placeholder; cover-in-grid + contain-in-viewer/spotlight doctrines kept via CSS object-fit
+function toDisplayUrl(url){
+  if(!url) return "";
+  if(!/pbs\.twimg\.com/i.test(url)) return url;
+  return String(url).replace(/([?&])name=orig\b/i, "$1name=large");
+}
 function getDisplaySrc(photo){
   if(!photo) return "";
-  return photo.image_url_large || photo.image_url_orig || "";
+  const raw = photo.image_url_large || photo.image_url_orig || "";
+  return toDisplayUrl(raw);
 }
 function getOrigSrc(photo){
   if(!photo) return "";
@@ -530,13 +536,54 @@ function getOrigSrc(photo){
 function hasPhotoImage(photo){
   return !!(photo && (photo.image_url_large || photo.image_url_orig));
 }
+function preloadDisplaySrc(src){
+  if(!src) return;
+  const d=toDisplayUrl(src);
+  if(!d) return;
+  const im=new Image();
+  im.decoding="async";
+  im.src=d;
+}
+function preloadAdjacentPhotos(tweet, centerIdx){
+  if(!tweet || !tweet.photos) return;
+  const n=tweet.photos.length;
+  if(n<=1) return;
+  const idxs=[(centerIdx+1)%n, (centerIdx-1+n)%n];
+  idxs.forEach(i=>{
+    const ph=tweet.photos[i];
+    const s=getDisplaySrc(ph);
+    if(s) preloadDisplaySrc(s);
+  });
+}
+function preloadViewerTweet(idx){
+  const t=visible[idx];
+  if(!t || !t.photos) return;
+  t.photos.forEach(ph=>{
+    const s=getDisplaySrc(ph);
+    if(s) preloadDisplaySrc(s);
+  });
+  // also preload neighbor tweets' first photo
+  const n=visible.length;
+  if(n>1){
+    const neighbors=[(idx+1)%n, (idx-1+n)%n];
+    neighbors.forEach(ni=>{
+      const nt=visible[ni];
+      if(nt && nt.photos && nt.photos[0]){
+        const s=getDisplaySrc(nt.photos[0]);
+        if(s) preloadDisplaySrc(s);
+      }
+    });
+  }
+}
 function mediaHtml(p, photoIdx, opts){
   const idx=(typeof photoIdx==="number"?photoIdx:0);
   const ph=(p.photos && p.photos[idx]) ? p.photos[idx] : (p.photos && p.photos[0] ? p.photos[0] : null);
   const src=getDisplaySrc(ph);
   if(src){
     const alt=esc(p.captionReal || p.caption || `Foto ${p.photographer} — #SeniNala`);
-    return `<img src="${esc(src)}" alt="${alt}" loading="lazy">`;
+    const isViewer = opts && opts.viewer;
+    const loading = isViewer ? "eager" : "lazy";
+    return `<img src="${esc(src)}" alt="${alt}" loading="${loading}" decoding="async" style="opacity:1;transition:opacity .22s var(--ease-out)">`;
   }
   return svgPlaceholder(p, p.id, idx, opts);
 }
@@ -775,6 +822,9 @@ function openViewer(realIdx){
   requestAnimationFrame(()=>{
     v.classList.add("open");
     renderViewer(true);
+    preloadViewerTweet(viewerIndex);
+    const cur=visible[viewerIndex];
+    if(cur) preloadAdjacentPhotos(cur, viewerPhotoIndex);
   });
   document.body.style.overflow="hidden";
   $("#vClose").focus();
@@ -814,13 +864,20 @@ function stepViewer(dir){
     incoming.classList.remove("enter-right");
     incoming.classList.add("active");
     updateViewerChrome();
+    preloadViewerTweet(viewerIndex);
+    const curT=visible[viewerIndex];
+    if(curT) preloadAdjacentPhotos(curT, viewerPhotoIndex);
   }));
   if(cur) setTimeout(()=>{ if(cur.parentNode) cur.remove(); }, 600);
   if(!cur){
     incoming.classList.remove("enter-right");
     incoming.classList.add("active");
     updateViewerChrome();
+    preloadViewerTweet(viewerIndex);
+    const curT2=visible[viewerIndex];
+    if(curT2) preloadAdjacentPhotos(curT2, viewerPhotoIndex);
   }
+  preloadViewerTweet(next);
 }
 function stepPhoto(dir){
   const p = visible[viewerIndex];
@@ -840,6 +897,7 @@ function stepPhoto(dir){
   }
   updatePhotoPager();
   updateDownloadHandler();
+  preloadAdjacentPhotos(p, viewerPhotoIndex);
 }
 function updatePhotoPager(){
   const p = visible[viewerIndex];
@@ -940,6 +998,9 @@ function renderViewer(first){
   const nx = document.getElementById("photoNext");
   if(pv) pv.addEventListener("click", ()=> stepPhoto(-1));
   if(nx) nx.addEventListener("click", ()=> stepPhoto(1));
+  const cur=visible[viewerIndex];
+  if(cur) preloadAdjacentPhotos(cur, viewerPhotoIndex);
+  preloadViewerTweet(viewerIndex);
 }
 function updateViewerChrome(){
   const p = visible[viewerIndex];

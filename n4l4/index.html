@@ -139,6 +139,7 @@ function renderImageRows(id){
       a[i]=e.target.value;
       draftMap.set(tweetKey, a);
       renderImagePreview(tweetKey);
+      updateQueueMediaFor(tweetKey);
     });
   });
   wrap.querySelectorAll("button[data-remove-image]").forEach(btn=>{
@@ -152,6 +153,7 @@ function renderImageRows(id){
       draftMap.set(tweetKey, a);
       renderImageRows(tweetKey);
       renderImagePreview(tweetKey);
+      updateQueueMediaFor(tweetKey);
     });
   });
   // toggle tambah button disabled when >=4
@@ -176,7 +178,7 @@ function renderImagePreview(id){
     img.src=u;
     img.alt=`Pratinjau foto ${i+1}`;
     img.loading="lazy";
-    img.style.cssText="width:100%;height:100%;object-fit:cover;object-position:center;display:block";
+    img.style.cssText="width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:var(--paper)";
     img.onerror=()=>{
       img.style.display="none";
       const note=document.createElement("span");
@@ -287,6 +289,7 @@ async function autoFetchImages(id){
     draftMap.set(key, urls);
     renderImageRows(key);
     renderImagePreview(key);
+    updateQueueMediaFor(key);
     showToast(`Dapat ${urls.length} foto, cek ya!`, true);
   }catch(err){
     clearTimeout(timeout);
@@ -328,33 +331,56 @@ function tweetSvgThumb(label){
 function queueMediaHtml(item){
   const n = item.photos ? item.photos.length : 0;
   const handle=getHandleForItem(item);
-  const hasImages=item.photos && item.photos.some(ph=>ph.image_url_large||ph.image_url_orig);
+  const draftUrls = collectImageUrls(item.id);
+  const hasDbImages=item.photos && item.photos.some(ph=>ph.image_url_large||ph.image_url_orig);
+  const hasDraft = draftUrls.length>0;
+  const hasImages = hasDbImages || hasDraft;
   if(hasImages){
-    const thumbs=item.photos.map((ph,i)=>{
-      const pid=ph.pid || `${item.id}-${i+1}`;
-      const v=getFrameVariantByIds(handle, item.id, pid);
-      const src=ph.image_url_large || ph.image_url_orig;
-      if(src){
-        return `<div class="admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)"><img src="${esc(src)}" alt="Foto ${i+1} dari ${item.photos.length}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div style="display:none;place-items:center;padding:8px;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;min-height:60px">tidak bisa pratinjau</div></div>`;
-      }
-      return `<div class="admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)">${tweetSvgThumb(ph.label || `Foto ${i+1}`)}</div>`;
-    }).join("");
-    if(n<=1){
-      return `<div class="tweet-media" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:1fr;gap:6px">${thumbs}</div></div>`;
+    let sources = [];
+    if(hasDbImages){
+      sources = item.photos.filter(ph=>ph.image_url_large||ph.image_url_orig).map((ph,i)=>({src: ph.image_url_large||ph.image_url_orig, pid: ph.pid || `${item.id}-${i+1}`, label: ph.label || `Foto ${i+1}`}));
+    } else if(hasDraft){
+      sources = draftUrls.map((u,i)=>({src: u, pid: `${item.id}-draft-${i+1}`, label: `Foto ${i+1}`}));
     }
-    return `<div class="tweet-media" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${thumbs}</div><small style="color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase">${n} foto dalam 1 tweet</small></div>`;
+    const thumbs=sources.map((s,i)=>{
+      const pid=s.pid;
+      const v=getFrameVariantByIds(handle, item.id, pid);
+      const src=s.src;
+      if(src){
+        return `<div class="admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)"><img src="${esc(src)}" alt="Foto ${i+1} dari ${sources.length}" loading="lazy" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:var(--paper)" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div style="display:none;place-items:center;padding:8px;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;min-height:60px">tidak bisa pratinjau</div></div>`;
+      }
+      return `<div class="admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)">${tweetSvgThumb(s.label || `Foto ${i+1}`)}</div>`;
+    }).join("");
+    const outN = sources.length;
+    if(outN<=1){
+      return `<div class="tweet-media" data-queue-media="${esc(item.id)}" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:1fr;gap:6px">${thumbs}</div></div>`;
+    }
+    return `<div class="tweet-media" data-queue-media="${esc(item.id)}" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${thumbs}</div><small style="color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase">${outN} foto dalam 1 tweet</small></div>`;
   }
   if(n<=1){
     const pid=(item.photos && item.photos[0] && item.photos[0].pid) ? item.photos[0].pid : `${item.id}-1`;
     const v=getFrameVariantByIds(handle, item.id, pid);
-    return `<div class="tweet-media admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)">${tweetSvgSmall()}</div>`;
+    return `<div class="tweet-media admin-thumb ${v}" data-queue-media="${esc(item.id)}" style="border-radius:12px;overflow:hidden;background:var(--paper)">${tweetSvgSmall()}</div>`;
   }
   const thumbs = item.photos.map((ph,i)=>{
     const pid=ph.pid || `${item.id}-${i+1}`;
     const v=getFrameVariantByIds(handle, item.id, pid);
     return `<div class="admin-thumb ${v}" style="border-radius:12px;overflow:hidden;background:var(--paper)">${tweetSvgThumb(ph.label || `Foto ${i+1}`)}</div>`;
   }).join("");
-  return `<div class="tweet-media" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${thumbs}</div><small style="color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase">${n} foto dalam 1 tweet — SINTETIS</small></div>`;
+  return `<div class="tweet-media" data-queue-media="${esc(item.id)}" style="display:grid;gap:6px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${thumbs}</div><small style="color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase">${n} foto dalam 1 tweet — SINTETIS</small></div>`;
+}
+function updateQueueMediaFor(id){
+  const key=String(id);
+  const item=pending.find(p=>String(p.id)===key);
+  if(!item) return;
+  const holder=document.querySelector(`[data-queue-media="${CSS.escape(key)}"]`);
+  if(!holder) return;
+  const tmp=document.createElement("div");
+  tmp.innerHTML=queueMediaHtml(item);
+  const fresh=tmp.firstElementChild;
+  if(fresh && holder.parentNode){
+    holder.replaceWith(fresh);
+  }
 }
 function mapPendingRow(row){
   const handleClean = String(row.handle||"").replace(/^@/,"");
@@ -490,6 +516,8 @@ function renderQueue(){
         arr.push("");
         draftMap.set(String(id), arr);
         renderImageRows(id);
+        renderImagePreview(id);
+        updateQueueMediaFor(id);
         // focus last input
         const wrap=document.getElementById(`imageRows-${id}`);
         const last=wrap && wrap.querySelector("input:last-of-type");
