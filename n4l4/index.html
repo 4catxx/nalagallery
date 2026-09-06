@@ -56,30 +56,47 @@
               <span class="ops-stats-divider" aria-hidden="true"></span>
               <span class="status" style="background:var(--paper)">Disetujui: <b id="approvedCount">0</b></span>
               <span class="status" style="background:var(--paper)">Ditolak: <b id="rejectedCount">0</b></span>
+              <span class="status" style="background:var(--paper)">Arsip: <b id="arsipCount">0</b></span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn small" id="refreshPublic" type="button">Muat ulang</button>
-              <button class="btn small" id="resetQueue" type="button">Reset demo lagi yuk</button>
               <button class="btn small" id="logoutBtn" type="button" style="border-color:var(--field);color:var(--field)">Keluar</button>
             </div>
           </div>
-          <section class="ops-section" aria-label="Laporan tautan mati">
-          <div id="reportsPanel" style="margin-bottom:0;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2);display:none">
+          <nav class="ops-tabs" role="tablist" aria-label="Kelola konten">
+            <button class="ops-tab is-active" role="tab" id="tabbtn-queue" aria-controls="tab-queue" aria-selected="true" data-tab="queue" type="button">Antrean <span class="ops-count" id="tabCountQueue">0</span></button>
+            <button class="ops-tab" role="tab" id="tabbtn-reports" aria-controls="tab-reports" aria-selected="false" data-tab="reports" type="button" tabindex="-1">Laporan <span class="ops-count" id="tabCountReports">0</span></button>
+            <button class="ops-tab" role="tab" id="tabbtn-rejected" aria-controls="tab-rejected" aria-selected="false" data-tab="rejected" type="button" tabindex="-1">Ditolak <span class="ops-count" id="tabCountRejected">0</span></button>
+            <button class="ops-tab" role="tab" id="tabbtn-arsip" aria-controls="tab-arsip" aria-selected="false" data-tab="arsip" type="button" tabindex="-1">Arsip <span class="ops-count" id="tabCountArsip">0</span></button>
+          </nav>
+          <section class="ops-tabpanel" id="tab-queue" role="tabpanel" aria-labelledby="tabbtn-queue" aria-label="Antrean kurasi" tabindex="0">
+          <div class="queue" id="queue" role="list"></div>
+          <div style="text-align:center;margin-top:12px"><button class="btn small" id="queueMore" type="button" hidden>Muat lebih banyak</button></div>
+          </section>
+          <section class="ops-tabpanel" id="tab-reports" role="tabpanel" aria-labelledby="tabbtn-reports" aria-label="Laporan tautan mati" tabindex="0" hidden>
+          <div id="reportsPanel" style="margin-bottom:0;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2)">
             <h4 style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Laporan tautan mati dari Nalania, makasih ya! <span class="ops-count" id="reportsCount">0</span></h4>
             <p class="ops-hint">Item yang dilaporin ≥1 kali muncul di sini biar owner bisa tinjau ya.</p>
             <div id="reportsList" style="margin-top:8px;display:grid;gap:6px" role="list"></div>
+            <div style="text-align:center;margin-top:8px"><button class="btn small" id="reportsMore" type="button" hidden>Muat lebih banyak</button></div>
           </div>
           </section>
-          <section class="ops-section" aria-label="Antrean kurasi">
-          <div class="queue" id="queue" role="list"></div>
-          </section>
-          <details class="ops-fold" id="rejectedFold">
-            <summary><h4>Daftar ditolak</h4><span class="ops-count" id="rejectedFoldCount">0</span></summary>
-            <div class="ops-fold-body">
+          <section class="ops-tabpanel" id="tab-rejected" role="tabpanel" aria-labelledby="tabbtn-rejected" aria-label="Daftar ditolak" tabindex="0" hidden>
+          <div id="rejectedPanel" style="border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2)">
+            <h4 style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Daftar ditolak</h4>
             <p class="ops-hint">Pulihkan buat balikin ke antrean, hapus permanen buat buang sekalian foto & laporannya.</p>
             <div id="rejectedList" style="margin-top:8px;display:grid;gap:6px" role="list"></div>
-            </div>
-          </details>
+            <div style="text-align:center;margin-top:8px"><button class="btn small" id="rejectedMore" type="button" hidden>Muat lebih banyak</button></div>
+          </div>
+          </section>
+          <section class="ops-tabpanel" id="tab-arsip" role="tabpanel" aria-labelledby="tabbtn-arsip" aria-label="Arsip mati" tabindex="0" hidden>
+          <div id="arsipPanel" style="border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2)">
+            <h4 style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Arsip mati — sembunyi dari galeri</h4>
+            <p class="ops-hint">Kembalikan buat terbit lagi ke galeri, hapus permanen buat buang sekalian foto & laporannya.</p>
+            <div id="arsipList" style="margin-top:8px;display:grid;gap:6px" role="list"></div>
+            <div style="text-align:center;margin-top:8px"><button class="btn small" id="arsipMore" type="button" hidden>Muat lebih banyak</button></div>
+          </div>
+          </section>
         </div>
       </div>
     </div>
@@ -313,7 +330,13 @@ async function autoFetchImages(id){
 }
 let pending = [];
 let rejected = [];
-let approvedCount = 0, rejectedCount = 0;
+let arsip = [];
+let reportRowsCache = [];
+let reportCountsCache = {};
+let reportIds = [];
+let approvedCount = 0, rejectedCount = 0, arsipCount = 0;
+let activeTab = "queue";
+let queueLimit = 6, reportsLimit = 15, rejectedLimit = 15, arsipLimit = 15;
 let accessToken = null;
 try{ accessToken = sessionStorage.getItem("nala-admin-token"); }catch(e){}
 const $ = s=>document.querySelector(s);
@@ -428,6 +451,7 @@ async function fetchPending(){
     fetchReports();
     fetchRejected();
     fetchApprovedCount();
+    fetchArsip();
   }catch(err){
     console.error("[Nala Admin] gagal memuat antrean", err);
     if(q) q.innerHTML=`<div class="empty"><b>Hai-hai, belum bisa muat antrean — cek koneksi ya!</b><span style="font-size:11px;letter-spacing:.04em;color:var(--muted)">tidak bisa memuat antrean, cek koneksi</span></div>`;
@@ -442,27 +466,39 @@ async function fetchReports(){
     const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?select=*,tweets(author,handle,url,is_dead)`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
-    const rc0=$("#reportsCount");
-    if(!rows || rows.length===0){
-      panel.style.display="none";
-      if(rc0) rc0.textContent="0";
-      return;
-    }
+    reportRowsCache = Array.isArray(rows)?rows:[];
     const counts={};
-    rows.forEach(r=>{
+    reportRowsCache.forEach(r=>{
       const tid=String(r.tweet_id||r.tweetId||"");
       if(tid) counts[tid]=(counts[tid]||0)+1;
     });
-    const ids=Object.keys(counts);
+    reportCountsCache=counts;
+    reportIds=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
     const rc1=$("#reportsCount");
-    if(rc1) rc1.textContent=String(ids.length);
-    if(!ids.length){ panel.style.display="none"; return; }
-    panel.style.display="block";
-    list.innerHTML="";
-    ids.forEach(id=>{
-      const sample=rows.find(r=>String(r.tweet_id)===id);
+    if(rc1) rc1.textContent=String(reportIds.length);
+    const tc=$("#tabCountReports");
+    if(tc) tc.textContent=String(reportIds.length);
+    renderReports();
+  }catch(err){
+    console.error("[Nala Admin] gagal memuat laporan", err);
+    if(list) list.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Belum bisa muat laporan — cek koneksi ya!</span>`;
+    showToast("Hai-hai, laporannya belum kekirim — cek koneksi ya!", false);
+  }
+}
+function renderReports(){
+  const list=$("#reportsList");
+  if(!list) return;
+  list.innerHTML="";
+  if(reportIds.length===0){
+    list.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Belum ada laporan — bersih, Roar!</span>`;
+    const more0=$("#reportsMore");
+    if(more0) more0.hidden=true;
+    return;
+  }
+  reportIds.slice(0,reportsLimit).forEach(id=>{
+      const sample=reportRowsCache.find(r=>String(r.tweet_id)===id);
       const tweetInfo = sample && sample.tweets ? sample.tweets : { author:"@anon", handle:"anon", url:"" };
-      const count=counts[id];
+      const count=reportCountsCache[id]||0;
       const row=document.createElement("div");
       row.className="notice";
       row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
@@ -475,11 +511,8 @@ async function fetchReports(){
     });
     list.querySelectorAll("[data-dead-toggle]").forEach(b=> b.addEventListener("click", ()=> setTweetDead(b.getAttribute("data-dead-toggle"), b.getAttribute("data-dead-current")!=="1", b)));
     list.querySelectorAll("[data-clear-reports]").forEach(b=> b.addEventListener("click", ()=> clearTweetReports(b.getAttribute("data-clear-reports"), b)));
-  }catch(err){
-    console.error("[Nala Admin] gagal memuat laporan", err);
-    panel.style.display="none";
-    showToast("Hai-hai, laporannya belum kekirim — cek koneksi ya!", false);
-  }
+    const more1=$("#reportsMore");
+    if(more1) more1.hidden = reportIds.length<=reportsLimit;
 }
 async function setTweetDead(id, dead, btn){
   const key=String(id);
@@ -492,8 +525,20 @@ async function setTweetDead(id, dead, btn){
       body: JSON.stringify({ is_dead: !!dead })
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    showToast(dead ? "Ditandai arsip mati — galeri tampil ARSIP ya!" : "Arsip dibatalkan — tampil normal lagi!", true);
-    fetchReports();
+    if(dead){
+      await fetch(`${SUPABASE_URL}/rest/v1/reports?tweet_id=eq.${encodeURIComponent(key)}`, {
+        method:"DELETE",
+        headers: authHeaders()
+      });
+      showToast("Masuk Arsip — laporannya ikut bersih, bisa dikembalikan kapan aja!", true);
+      fetchReports();
+      fetchArsip();
+      switchTab("arsip");
+    } else {
+      showToast("Arsip dibatalkan — tampil normal lagi!", true);
+      fetchReports();
+      fetchArsip();
+    }
   }catch(err){
     console.error("[Nala Admin] tandai arsip gagal", err);
     showToast("Hai-hai, belum bisa menyimpan — cek koneksi ya, coba lagi!", false);
@@ -528,8 +573,8 @@ async function fetchRejected(){
     rejectedCount=rejected.length;
     const rc=$("#rejectedCount");
     if(rc) rc.textContent=String(rejectedCount);
-    const rfc=$("#rejectedFoldCount");
-    if(rfc) rfc.textContent=String(rejectedCount);
+    const rtc=$("#tabCountRejected");
+    if(rtc) rtc.textContent=String(rejectedCount);
     renderRejected();
   }catch(err){
     console.error("[Nala Admin] gagal memuat ditolak", err);
@@ -556,7 +601,7 @@ function renderRejected(){
     list.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Belum ada yang ditolak — bersih, Roar!</span>`;
     return;
   }
-  rejected.forEach(item=>{
+  rejected.slice(0,rejectedLimit).forEach(item=>{
     const nPhotos=item.photos?item.photos.length:0;
     const row=document.createElement("div");
     row.className="notice";
@@ -566,6 +611,8 @@ function renderRejected(){
   });
   list.querySelectorAll("[data-restore-rejected]").forEach(b=> b.addEventListener("click", ()=> restoreRejected(b.getAttribute("data-restore-rejected"), b)));
   list.querySelectorAll("[data-delete-rejected]").forEach(b=> b.addEventListener("click", ()=> deleteRejected(b.getAttribute("data-delete-rejected"), b)));
+  const moreJ=$("#rejectedMore");
+  if(moreJ) moreJ.hidden = rejected.length<=rejectedLimit;
 }
 async function restoreRejected(id, btn){
   const key=String(id);
@@ -582,10 +629,11 @@ async function restoreRejected(id, btn){
     rejectedCount=rejected.length;
     const rc=$("#rejectedCount");
     if(rc) rc.textContent=String(rejectedCount);
-    const rfc=$("#rejectedFoldCount");
-    if(rfc) rfc.textContent=String(rejectedCount);
+    const rtc=$("#tabCountRejected");
+    if(rtc) rtc.textContent=String(rejectedCount);
     renderRejected();
     fetchPending();
+    switchTab("queue");
     showToast("Dipulihkan ke antrean — cek di atas ya!", true);
   }catch(err){
     console.error("[Nala Admin] pulihkan gagal", err);
@@ -608,12 +656,138 @@ async function deleteRejected(id, btn){
     rejectedCount=rejected.length;
     const rc=$("#rejectedCount");
     if(rc) rc.textContent=String(rejectedCount);
-    const rfc=$("#rejectedFoldCount");
-    if(rfc) rfc.textContent=String(rejectedCount);
+    const rtc=$("#tabCountRejected");
+    if(rtc) rtc.textContent=String(rejectedCount);
     renderRejected();
     showToast("Dihapus permanen — dadah!", false);
   }catch(err){
-    console.error("[Nala Admin] hapus permanen gagal", err);
+    console.error("[Nala Admin] bersihkan laporan gagal", err);
+    showToast("Hai-hai, belum bisa membersihkan — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent=prevText; }
+  }
+}
+const TABS = ["queue","reports","rejected","arsip"];
+function switchTab(name){
+  if(TABS.indexOf(name)<0) return;
+  activeTab=name;
+  TABS.forEach(t=>{
+    const btn=document.querySelector(`[data-tab="${t}"]`);
+    const panel=document.getElementById(`tab-${t}`);
+    const on=t===name;
+    if(btn){ btn.classList.toggle("is-active", on); btn.setAttribute("aria-selected", String(on)); btn.tabIndex=on?0:-1; }
+    if(panel) panel.hidden=!on;
+  });
+}
+function wireTabs(){
+  document.querySelectorAll("[data-tab]").forEach(b=>{
+    b.addEventListener("click", ()=> switchTab(b.getAttribute("data-tab")));
+    b.addEventListener("keydown", (e)=>{
+      if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft") return;
+      e.preventDefault();
+      const tabs=[...document.querySelectorAll("[data-tab]")];
+      const i=tabs.indexOf(b);
+      const next=tabs[(i+(e.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length];
+      next.focus();
+      switchTab(next.getAttribute("data-tab"));
+    });
+  });
+  const qm=$("#queueMore");
+  if(qm) qm.addEventListener("click", ()=>{ queueLimit+=6; renderQueue(); });
+  const rm=$("#reportsMore");
+  if(rm) rm.addEventListener("click", ()=>{ reportsLimit+=15; renderReports(); });
+  const jm=$("#rejectedMore");
+  if(jm) jm.addEventListener("click", ()=>{ rejectedLimit+=15; renderRejected(); });
+  const am=$("#arsipMore");
+  if(am) am.addEventListener("click", ()=>{ arsipLimit+=15; renderArsip(); });
+}
+async function fetchArsip(){
+  const list=$("#arsipList");
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&is_dead=eq.true&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows=await res.json();
+    arsip=(rows||[]).map(mapPendingRow);
+    arsipCount=arsip.length;
+    const ac=$("#arsipCount");
+    if(ac) ac.textContent=String(arsipCount);
+    const tc=$("#tabCountArsip");
+    if(tc) tc.textContent=String(arsipCount);
+    renderArsip();
+  }catch(err){
+    console.error("[Nala Admin] gagal memuat arsip", err);
+    if(list) list.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Belum bisa muat arsip — cek koneksi ya!</span>`;
+  }
+}
+function renderArsip(){
+  const list=$("#arsipList");
+  if(!list) return;
+  list.innerHTML="";
+  if(arsip.length===0){
+    list.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Arsip kosong — semua tampil di galeri, Roar!</span>`;
+    const more0=$("#arsipMore");
+    if(more0) more0.hidden=true;
+    return;
+  }
+  arsip.slice(0,arsipLimit).forEach(item=>{
+    const nPhotos=item.photos?item.photos.length:0;
+    const row=document.createElement("div");
+    row.className="notice";
+    row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
+    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span> <span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span><br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-arsip="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Kembalikan</button><button class="btn small" type="button" data-delete-arsip="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll("[data-restore-arsip]").forEach(b=> b.addEventListener("click", ()=> restoreArsip(b.getAttribute("data-restore-arsip"), b)));
+  list.querySelectorAll("[data-delete-arsip]").forEach(b=> b.addEventListener("click", ()=> deleteArsip(b.getAttribute("data-delete-arsip"), b)));
+  const more1=$("#arsipMore");
+  if(more1) more1.hidden = arsip.length<=arsipLimit;
+}
+async function restoreArsip(id, btn){
+  const key=String(id);
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Mengembalikan..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+      method:"PATCH",
+      headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
+      body: JSON.stringify({ is_dead:false })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    arsip=arsip.filter(p=>String(p.id)!==String(key));
+    arsipCount=arsip.length;
+    const ac=$("#arsipCount");
+    if(ac) ac.textContent=String(arsipCount);
+    const tc=$("#tabCountArsip");
+    if(tc) tc.textContent=String(arsipCount);
+    renderArsip();
+    fetchApprovedCount();
+    showToast("Balik ke galeri — Roar!", true);
+  }catch(err){
+    console.error("[Nala Admin] kembalikan arsip gagal", err);
+    showToast("Hai-hai, belum bisa mengembalikan — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent=prevText; }
+  }
+}
+async function deleteArsip(id, btn){
+  const key=String(id);
+  if(!confirm("Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!")) return;
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+      method:"DELETE",
+      headers: authHeaders()
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    arsip=arsip.filter(p=>String(p.id)!==String(key));
+    arsipCount=arsip.length;
+    const ac=$("#arsipCount");
+    if(ac) ac.textContent=String(arsipCount);
+    const tc=$("#tabCountArsip");
+    if(tc) tc.textContent=String(arsipCount);
+    renderArsip();
+    showToast("Dihapus permanen — dadah!", false);
+  }catch(err){
+    console.error("[Nala Admin] hapus arsip gagal", err);
     showToast("Hai-hai, belum bisa menghapus — cek koneksi ya, coba lagi!", false);
     if(btn){ btn.disabled=false; btn.textContent=prevText; }
   }
@@ -624,7 +798,7 @@ function renderQueue(){
   if(pending.length===0){
     q.innerHTML=`<div class="empty"><b>Hai-hai! Antrean kosong, Roar!</b><span>Semua tautan udah dikurasi, keren! Tetap semangat!</span></div>`;
   } else {
-    pending.forEach(item=>{
+    pending.slice(0,queueLimit).forEach(item=>{
       const card=document.createElement("div");
       card.className="tweet-card";
       card.setAttribute("role","listitem");
@@ -690,6 +864,10 @@ function renderQueue(){
   $("#pendingCount").textContent = `${pending.length} menunggu dikurasi, semangat!`;
   $("#approvedCount").textContent = String(approvedCount);
   $("#rejectedCount").textContent = String(rejectedCount);
+  const tcq=$("#tabCountQueue");
+  if(tcq) tcq.textContent=String(pending.length);
+  const qm=$("#queueMore");
+  if(qm) qm.hidden = pending.length<=queueLimit;
 }
 async function approve(id){
   const btn=document.querySelector(`[data-approve="${id}"]`);
@@ -744,9 +922,8 @@ async function reject(id){
     draftMap.delete(String(id));
     renderQueue();
     fetchRejected();
-    const fold=document.getElementById("rejectedFold");
-    if(fold) fold.open=true;
-    showToast("Sudah ditolak, makasih ya — tetap semangat!", false);
+    switchTab("rejected");
+    showToast("Sudah ditolak — pindah ke tab Ditolak ya!", false);
   }catch(err){
     console.error("[Nala Admin] reject gagal", err);
     showToast("Hai-hai, belum bisa menolak — cek koneksi ya, coba lagi!", false);
@@ -794,30 +971,30 @@ $("#refreshPublic").addEventListener("click",()=>{
   }
   fetchPending();
 });
-$("#resetQueue").addEventListener("click",()=>{
-  if(!accessToken){
-    showToast("Hai-hai, silakan login dulu ya!", false);
-    return;
-  }
-  fetchPending();
-  showToast("Muat ulang antrean, semangat!", true);
-});
 $("#logoutBtn").addEventListener("click",()=>{
   accessToken=null;
   try{ sessionStorage.removeItem("nala-admin-token"); }catch(_){}
   pending=[];
   rejected=[];
-  approvedCount=0; rejectedCount=0;
-  const rfc0=$("#rejectedFoldCount");
-  if(rfc0) rfc0.textContent="0";
-  const rpc0=$("#reportsCount");
-  if(rpc0) rpc0.textContent="0";
+  arsip=[];
+  reportRowsCache=[];
+  reportCountsCache={};
+  reportIds=[];
+  approvedCount=0; rejectedCount=0; arsipCount=0;
+  queueLimit=6; reportsLimit=15; rejectedLimit=15; arsipLimit=15;
+  ["reportsCount","tabCountQueue","tabCountReports","tabCountRejected","tabCountArsip","arsipCount","approvedCount","rejectedCount"].forEach(cid=>{
+    const el=document.getElementById(cid);
+    if(el) el.textContent="0";
+  });
+  $("#pendingCount").textContent="0 menunggu";
+  switchTab("queue");
   $("#queueWrap").hidden=true;
   $("#gate").hidden=false;
   $("#gatePass").value="";
   showToast("Sudah keluar, sampai jumpa lagi — Hai-hai!", false);
 });
 (function initAdmin(){
+  wireTabs();
   if(accessToken){
     $("#gate").hidden=true;
     $("#queueWrap").hidden=false;
