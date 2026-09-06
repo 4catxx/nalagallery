@@ -222,7 +222,7 @@ function mapTweetRow(row){
     era: year ? `Era ${year}` : "Era —",
     badge: handleClean==="Nala_JKT48" ? "DARI NALA" : (photosArr.some(ph=>ph.image_url_large||ph.image_url_orig) ? "" : "FOTO MENYUSUL"),
     isReal: true,
-    deleted: false,
+    deleted: !!row.is_dead,
     accent: handleClean==="Nala_JKT48" ? "#0E7C86" : "#E2F2EF",
     palette: handleClean==="Nala_JKT48" ? ["#0E7C86","#E2F2EF"] : ["#0E7C86","#E2F2EF","#FFFBF2"],
     photos: photosArr,

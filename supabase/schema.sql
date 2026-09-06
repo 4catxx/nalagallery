@@ -55,8 +55,11 @@ create table if not exists public.tweets (
   status text not null default 'pending'
     check (status in ('pending', 'approved', 'rejected')),
   report_count integer not null default 0,
+  is_dead boolean not null default false,
   created_at timestamptz not null default now()
 );
+-- Migrasi DB lama: tambah is_dead bila belum ada (arsip link mati).
+alter table public.tweets add column if not exists is_dead boolean not null default false;
 alter table public.tweets enable row level security;
 
 -- Baca: publik hanya yang approved; admin semua.

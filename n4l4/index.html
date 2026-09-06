@@ -424,7 +424,7 @@ async function fetchReports(){
   const list=$("#reportsList");
   if(!panel||!list) return;
   try{
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?select=*,tweets(author,handle,url)`, { headers: authHeaders() });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?select=*,tweets(author,handle,url,is_dead)`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
     if(!rows || rows.length===0){
@@ -450,13 +450,53 @@ async function fetchReports(){
       const authorEsc = esc(tweetInfo.author||`@${tweetInfo.handle}`);
       const urlEsc = esc(tweetInfo.url||`tweet ${id}`);
       const handleEsc = esc(tweetInfo.handle||"");
-      row.innerHTML=`<span><b>${authorEsc} @${handleEsc}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Dilaporkan · ${count}</span><br><span style="word-break:break-all;color:var(--muted)">${urlEsc}</span></span><span class="reported-flag">Dilaporkan</span>`;
+      const isDead = !!(tweetInfo && tweetInfo.is_dead);
+      row.innerHTML=`<span style="flex:1;min-width:200px"><b>${authorEsc} @${handleEsc}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Dilaporkan · ${count}</span> ${isDead ? `<span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span>` : ``}<br><span style="word-break:break-all;color:var(--muted)">${urlEsc}</span></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tweetInfo.url ? `<a class="btn small" href="${esc(tweetInfo.url)}" target="_blank" rel="noopener noreferrer">Buka sumber</a>` : ``}<button class="btn small" type="button" data-dead-toggle="${esc(id)}" data-dead-current="${isDead ? "1" : "0"}">${isDead ? "Batalkan arsip" : "Tandai arsip mati"}</button><button class="btn small" type="button" data-clear-reports="${esc(id)}" style="background:var(--paper)">Bersihkan laporan</button></span>`;
       list.appendChild(row);
     });
+    list.querySelectorAll("[data-dead-toggle]").forEach(b=> b.addEventListener("click", ()=> setTweetDead(b.getAttribute("data-dead-toggle"), b.getAttribute("data-dead-current")!=="1", b)));
+    list.querySelectorAll("[data-clear-reports]").forEach(b=> b.addEventListener("click", ()=> clearTweetReports(b.getAttribute("data-clear-reports"), b)));
   }catch(err){
     console.error("[Nala Admin] gagal memuat laporan", err);
     panel.style.display="none";
     showToast("Hai-hai, laporannya belum kekirim — cek koneksi ya!", false);
+  }
+}
+async function setTweetDead(id, dead, btn){
+  const key=String(id);
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Menyimpan..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+      method:"PATCH",
+      headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
+      body: JSON.stringify({ is_dead: !!dead })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    showToast(dead ? "Ditandai arsip mati — galeri tampil ARSIP ya!" : "Arsip dibatalkan — tampil normal lagi!", true);
+    fetchReports();
+  }catch(err){
+    console.error("[Nala Admin] tandai arsip gagal", err);
+    showToast("Hai-hai, belum bisa menyimpan — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent=prevText; }
+  }
+}
+async function clearTweetReports(id, btn){
+  const key=String(id);
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Membersihkan..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/reports?tweet_id=eq.${encodeURIComponent(key)}`, {
+      method:"DELETE",
+      headers: authHeaders()
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    showToast("Laporan dibersihkan — makasih ya!", true);
+    fetchReports();
+  }catch(err){
+    console.error("[Nala Admin] bersihkan laporan gagal", err);
+    showToast("Hai-hai, belum bisa membersihkan — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent=prevText; }
   }
 }
 function renderQueue(){
