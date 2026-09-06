@@ -62,6 +62,90 @@ create table if not exists public.tweets (
 -- Migrasi DB lama: tambah is_dead bila belum ada (arsip link mati).
 alter table public.tweets add column if not exists is_dead boolean not null default false;
 alter table public.tweets add column if not exists avatar_url text;
+do $$ begin
+  alter table public.tweets add constraint tweets_url_twitter_only check (url ~ '^https?://(www\.)?(twitter\.com|x\.com)/[A-Za-z0-9_]+/status/[0-9]+');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter table public.tweets add constraint tweets_caption_length check (char_length(caption) <= 2000);
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter table public.tweets add constraint tweets_author_length check (char_length(author) <= 80);
+exception when duplicate_object then null;
+end $$;
+
+-- ---------- 7. Anti-spam: throttle per IP (berlaku juga untuk tembakan REST langsung) ----------
+alter table public.tweets add column if not exists submitter_ip text;
+alter table public.reports add column if not exists reporter_ip text;
+
+create or replace function public._client_ip()
+returns text
+language plpgsql
+stable
+as $$
+declare
+  h json;
+  x text;
+begin
+  begin
+    h := current_setting('request.headers', true)::json;
+  exception when others then
+    return 'unknown';
+  end;
+  x := coalesce(h->>'cf-connecting-ip', h->>'x-forwarded-for', '');
+  if x is null or x = '' then
+    return 'unknown';
+  end if;
+  return trim(split_part(x, ',', 1));
+end;
+$$;
+
+create or replace function public._throttle_tweets()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  ip text;
+  n int;
+begin
+  ip := public._client_ip();
+  NEW.submitter_ip := ip;
+  select count(*) into n from public.tweets where submitter_ip = ip and created_at > now() - interval '1 hour';
+  if n >= 30 then
+    raise exception 'Terlalu sering mengirim — coba lagi 1 jam lagi ya!';
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists tweets_throttle on public.tweets;
+create trigger tweets_throttle before insert on public.tweets for each row execute function public._throttle_tweets();
+
+create or replace function public._throttle_reports()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  ip text;
+  n int;
+begin
+  ip := public._client_ip();
+  NEW.reporter_ip := ip;
+  select count(*) into n from public.reports where reporter_ip = ip and created_at > now() - interval '1 hour';
+  if n >= 60 then
+    raise exception 'Terlalu sering melapor — coba lagi 1 jam lagi ya!';
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists reports_throttle on public.reports;
+create trigger reports_throttle before insert on public.reports for each row execute function public._throttle_reports();
 alter table public.tweets enable row level security;
 
 -- Baca: publik hanya yang approved; admin semua.

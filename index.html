@@ -403,7 +403,16 @@ async function doReport(id){
       headers:{ apikey: SUPABASE_ANON_KEY, "Content-Type":"application/json", Prefer:"return=minimal" },
       body: JSON.stringify({ tweet_id: sid })
     });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    if(!res.ok){
+      let m=""; try{ const j=await res.json(); m=j.message||""; }catch(_){}
+      if(m && /1 jam lagi/i.test(m)){
+        showToast("Hai-hai, pelan-pelan ya — kebanyakan lapor, jeda 1 jam yuk!");
+      } else {
+        console.error("[Nala Gallery] lapor gagal", res.status, m);
+        showToast("Hai-hai, laporannya belum kekirim — coba lagi nanti ya, makasih semangatnya!");
+      }
+      return true;
+    }
   }catch(err){
     console.error("[Nala Gallery] lapor gagal", err);
     showToast("Hai-hai, laporannya belum kekirim — coba lagi nanti ya, makasih semangatnya!");
@@ -471,6 +480,10 @@ function ceriaHeroEnter(){
 }
 const $ = s=>document.querySelector(s);
 const esc = s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function safeHttpUrl(u){
+  const s=String(u||"").trim();
+  return /^https?:\/\//i.test(s) ? s : "";
+}
 function svgPlaceholder(p, id, photoIdx, opts){
   photoIdx = (typeof photoIdx==="number" ? photoIdx : 0);
   opts = opts || {};
@@ -578,7 +591,7 @@ function preloadViewerTweet(idx){
 function mediaHtml(p, photoIdx, opts){
   const idx=(typeof photoIdx==="number"?photoIdx:0);
   const ph=(p.photos && p.photos[idx]) ? p.photos[idx] : (p.photos && p.photos[0] ? p.photos[0] : null);
-  const src=getDisplaySrc(ph);
+  const src=safeHttpUrl(getDisplaySrc(ph));
   if(src){
     const alt=esc(p.captionReal || p.caption || `Foto ${p.photographer} — #SeniNala`);
     const isViewer = opts && opts.viewer;
@@ -687,7 +700,7 @@ function renderGrid(){
         <div class="card-actions">
           <button class="btn primary block open" type="button" data-open="${idx}" aria-label="Buka tweet ${p.id} oleh ${p.photographer} — ${nPhotos} foto — ${p.caption.slice(0,40)}">Buka <span aria-hidden="true">→</span></button>
         </div>
-        <a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" class="meta-pill" style="text-decoration:underline;text-underline-offset:3px;text-align:center;display:block">${p.deleted ? `Sumber asli (mati) — cuplikan disimpan` : `Sumber asli`} ↗</a>
+        ${safeHttpUrl(p.tweetUrl) ? `<a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" class="meta-pill" style="text-decoration:underline;text-underline-offset:3px;text-align:center;display:block">${p.deleted ? `Sumber asli (mati) — cuplikan disimpan` : `Sumber asli`} ↗</a>` : `<span class="meta-pill" style="text-align:center;display:block">Tautan sumber tidak valid</span>`}
         <div style="text-align:center;margin-top:4px">${p.deleted ? `` : `<button class="report-link" data-report="${p.id}" ${hasReported(p.id) ? `disabled` : ``}>${hasReported(p.id) ? `Sudah dilaporkan, makasih ya!` : `Laporkan link mati`}</button>`}</div>
       </div>
     `;
@@ -793,7 +806,7 @@ function renderPhotographers(){
     card.setAttribute("role","listitem");
     card.setAttribute("aria-label",`Lihat foto-foto kece oleh ${entry.displayName} @${entry.handle} — ${entry.count} foto, yuk!`);
     const initials=entry.displayName.trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join("").slice(0,2) || entry.handle.slice(0,2).toUpperCase();
-    const avatarInner=entry.avatar ? `<img src="${esc(entry.avatar)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:999px;display:block" onerror="this.remove()">` : esc(initials);
+    const avatarInner=safeHttpUrl(entry.avatar) ? `<img src="${esc(entry.avatar)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:999px;display:block" onerror="this.remove()">` : esc(initials);
     card.innerHTML=`
       <span class="photographer-avatar" aria-hidden="true">${avatarInner}</span>
       <span class="photographer-info">
@@ -974,11 +987,11 @@ function buildViewerPhoto(p, idx, photoIdx){
       </div>` : ``}
       <div class="frame-bar">
         <div>
-          <div class="author">${p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" style="width:18px;height:18px;border-radius:999px;object-fit:cover;vertical-align:-4px;margin-right:4px" onerror="this.remove()">` : ``}${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``} <span style="font-weight:600;color:var(--muted)">· ${esc(p.era)}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${p.isReal ? (p.badge ? `<span style="background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">${esc(p.badge)}</span>` : ``) : `<span style="background:var(--paper);color:var(--muted);border:1px solid var(--line);padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">SINTETIS</span>`} <span class="meta-pill curated-pill" style="margin-left:6px">Dikurasi ${esc(p.curatedAt||"—")}</span></div>
+          <div class="author">${safeHttpUrl(p.avatar) ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" style="width:18px;height:18px;border-radius:999px;object-fit:cover;vertical-align:-4px;margin-right:4px" onerror="this.remove()">` : ``}${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``} <span style="font-weight:600;color:var(--muted)">· ${esc(p.era)}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${p.isReal ? (p.badge ? `<span style="background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">${esc(p.badge)}</span>` : ``) : `<span style="background:var(--paper);color:var(--muted);border:1px solid var(--line);padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">SINTETIS</span>`} <span class="meta-pill curated-pill" style="margin-left:6px">Dikurasi ${esc(p.curatedAt||"—")}</span></div>
           <div class="caption">${esc(p.caption)}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <a class="link" href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer">${p.deleted ? "Sumber mati — lihat cuplikan ya" : "Buka sumber asli ya"} ↗</a>
+          ${safeHttpUrl(p.tweetUrl) ? `<a class="link" href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer">${p.deleted ? "Sumber mati — lihat cuplikan ya" : "Buka sumber asli ya"} ↗</a>` : `<span class="link" aria-disabled="true">Tautan sumber tidak valid</span>`}
            ${p.deleted ? `` : `<button class="report-link" data-report-viewer="${p.id}" ${hasReported(p.id) ? `disabled` : ``}>${hasReported(p.id) ? `Sudah dilaporkan, makasih ya!` : `Laporkan link mati`}</button>`}
         </div>
       </div>
@@ -1010,7 +1023,7 @@ function updateViewerChrome(){
   $("#vCounter").textContent = `${viewerIndex+1} / ${visible.length}`;
   $("#vEra").textContent = p.era;
   $("#vAuthor").textContent = p.isReal && p.handle ? `@${p.handle}` : p.photographer;
-  $("#vCredit").innerHTML = `<b>${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``}</b> <span>— ${esc(p.caption.slice(0,88))}${p.caption.length>88 ? "…" : ""}${p.date ? ` · ${esc(p.date)}` : ``}</span> <a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;color:var(--accent)">${p.deleted ? "sumber mati (cuplikan disimpan)" : "sumber"} ↗</a> ${p.isReal ? (p.badge ? `<span style="opacity:.9;background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:1px 6px;border-radius:999px;font-size:10px;font-weight:900">· ${esc(p.badge)}</span>` : ``) : `<span style="opacity:.7">· SINTETIS</span>`} ${nPhotos>1 ? `<span style="opacity:.9;background:var(--paper);border:1px solid var(--line);padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700">· Foto ${viewerPhotoIndex+1} dari ${nPhotos}</span>` : ``}`;
+  $("#vCredit").innerHTML = `<b>${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``}</b> <span>— ${esc(p.caption.slice(0,88))}${p.caption.length>88 ? "…" : ""}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${safeHttpUrl(p.tweetUrl) ? `<a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;color:var(--accent)">${p.deleted ? "sumber mati (cuplikan disimpan)" : "sumber"} ↗</a>` : `<span style="color:var(--muted)">sumber tidak valid</span>`} ${p.isReal ? (p.badge ? `<span style="opacity:.9;background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:1px 6px;border-radius:999px;font-size:10px;font-weight:900">· ${esc(p.badge)}</span>` : ``) : `<span style="opacity:.7">· SINTETIS</span>`} ${nPhotos>1 ? `<span style="opacity:.9;background:var(--paper);border:1px solid var(--line);padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700">· Foto ${viewerPhotoIndex+1} dari ${nPhotos}</span>` : ``}`;
   const dots = $("#vDots");
   dots.innerHTML = visible.map((_,i)=>`<span class="dot ${i===viewerIndex ? "on":""}" aria-hidden="true"></span>`).join("");
   updatePhotoPager();

@@ -329,7 +329,7 @@ function renderMetaPreview(id){
     return;
   }
   const label=(meta.author||meta.handle||"NA").slice(0,2).toUpperCase();
-  const av=meta.avatar
+  const av=(meta.avatar && safeHttpUrl(meta.avatar))
     ? `<img src="${esc(meta.avatar)}" alt="Foto profil ${esc(meta.author||meta.handle||"author")}" loading="lazy" style="width:32px;height:32px;border-radius:999px;object-fit:cover;flex:none;border:1px solid var(--line)" onerror="this.style.display='none'">`
     : `<span class="avatar" style="width:32px;height:32px;font-size:10px;flex:none" aria-hidden="true">${esc(label)}</span>`;
   const who=esc(meta.author || (meta.handle ? "@"+meta.handle : "author"));
@@ -393,6 +393,10 @@ let accessToken = null;
 try{ accessToken = sessionStorage.getItem("nala-admin-token"); }catch(e){}
 const $ = s=>document.querySelector(s);
 const esc = s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+function safeHttpUrl(u){
+  const s=String(u||"").trim();
+  return /^https?:\/\//i.test(s) ? s : "";
+}
 function showToast(msg, isAccent){
   const t=document.createElement("div");
   t.textContent=msg;
@@ -443,7 +447,7 @@ function queueAuthor(item){ const m=queueMeta(item.id); return (m&&m.author)||it
 function queueCaption(item){ const m=queueMeta(item.id); return ((m&&m.caption)||item.caption); }
 function queueAvatarInner(item){
   const m=queueMeta(item.id);
-  if(m&&m.avatar) return `<img src="${esc(m.avatar)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:999px;display:block" onerror="this.remove()">`;
+  if(m&&safeHttpUrl(m.avatar)) return `<img src="${esc(m.avatar)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:999px;display:block" onerror="this.remove()">`;
   return esc(item.photographer.slice(1,3).toUpperCase());
 }
 function updateQueueMetaFor(id){
@@ -600,7 +604,7 @@ function renderReports(){
       const urlEsc = esc(tweetInfo.url||`tweet ${id}`);
       const handleEsc = esc(tweetInfo.handle||"");
       const isDead = !!(tweetInfo && tweetInfo.is_dead);
-      row.innerHTML=`<span style="flex:1;min-width:200px"><b>${authorEsc} @${handleEsc}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Dilaporkan · ${count}</span> ${isDead ? `<span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span>` : ``}<br><span style="word-break:break-all;color:var(--muted)">${urlEsc}</span></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tweetInfo.url ? `<a class="btn small" href="${esc(tweetInfo.url)}" target="_blank" rel="noopener noreferrer">Buka sumber</a>` : ``}<button class="btn small" type="button" data-dead-toggle="${esc(id)}" data-dead-current="${isDead ? "1" : "0"}">${isDead ? "Batalkan arsip" : "Tandai arsip mati"}</button><button class="btn small" type="button" data-clear-reports="${esc(id)}" style="background:var(--paper)">Bersihkan laporan</button></span>`;
+      row.innerHTML=`<span style="flex:1;min-width:200px"><b>${authorEsc} @${handleEsc}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Dilaporkan · ${count}</span> ${isDead ? `<span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span>` : ``}<br><span style="word-break:break-all;color:var(--muted)">${urlEsc}</span></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tweetInfo.url && safeHttpUrl(tweetInfo.url) ? `<a class="btn small" href="${esc(tweetInfo.url)}" target="_blank" rel="noopener noreferrer">Buka sumber</a>` : ``}<button class="btn small" type="button" data-dead-toggle="${esc(id)}" data-dead-current="${isDead ? "1" : "0"}">${isDead ? "Batalkan arsip" : "Tandai arsip mati"}</button><button class="btn small" type="button" data-clear-reports="${esc(id)}" style="background:var(--paper)">Bersihkan laporan</button></span>`;
       list.appendChild(row);
     });
     list.querySelectorAll("[data-dead-toggle]").forEach(b=> b.addEventListener("click", ()=> setTweetDead(b.getAttribute("data-dead-toggle"), b.getAttribute("data-dead-current")!=="1", b)));
@@ -700,7 +704,7 @@ function renderRejected(){
     const row=document.createElement("div");
     row.className="notice";
     row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
-    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span><br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-rejected="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Pulihkan</button><button class="btn small" type="button" data-delete-rejected="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
+    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-rejected="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Pulihkan</button><button class="btn small" type="button" data-delete-rejected="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
     list.appendChild(row);
   });
   list.querySelectorAll("[data-restore-rejected]").forEach(b=> b.addEventListener("click", ()=> restoreRejected(b.getAttribute("data-restore-rejected"), b)));
@@ -827,7 +831,7 @@ function renderArsip(){
     const row=document.createElement("div");
     row.className="notice";
     row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
-    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span> <span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span><br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-arsip="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Kembalikan</button><button class="btn small" type="button" data-delete-arsip="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
+    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span> <span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-arsip="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Kembalikan</button><button class="btn small" type="button" data-delete-arsip="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
     list.appendChild(row);
   });
   list.querySelectorAll("[data-restore-arsip]").forEach(b=> b.addEventListener("click", ()=> restoreArsip(b.getAttribute("data-restore-arsip"), b)));
@@ -903,7 +907,7 @@ function renderQueue(){
             <div data-queue-who="${esc(item.id)}"><b>${esc(queueAuthor(item))}</b><br><span>${esc(item.era)} · ${esc(item.status||"pending")}</span></div>
             <span class="status" style="margin-left:auto">Menunggu</span>
           </div>
-          <div class="tweet-text"><span data-queue-caption="${esc(item.id)}">${esc(queueCaption(item))}</span><br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;word-break:break-all">${esc(item.tweetUrl)}</a></div>
+          <div class="tweet-text"><span data-queue-caption="${esc(item.id)}">${esc(queueCaption(item))}</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;word-break:break-all">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</div>
           ${queueMediaHtml(item)}
           <small style="color:var(--muted);font-weight:600">Pratinjau — Hai-hai!${item.photos && item.photos.length>1 ? ` — ${item.photos.length} foto dalam 1 tweet, Roar!` : ``}</small>
         </div>
@@ -990,7 +994,7 @@ async function approve(id){
     const patch={ status:"approved", curated_at: today };
     const meta=draftMeta.get(String(id));
     if(meta){
-      if(meta.caption) patch.caption=meta.caption;
+      if(meta.caption) patch.caption=meta.caption.slice(0,2000);
       if(meta.author) patch.author=meta.author;
       if(meta.avatar) patch.avatar_url=meta.avatar;
       if(meta.tweet_date) patch.tweet_date=meta.tweet_date;

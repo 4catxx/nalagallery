@@ -169,6 +169,9 @@ $("#submitForm").addEventListener("submit", async (e)=>{
         err.textContent = "Hai-hai, duplikat ketahuan! URL ini sudah ada di galeri atau antrean, cek lagi ya.";
         err.hidden=false;
         dup.hidden=false;
+      } else if(msg && /1 jam lagi/i.test(msg)){
+        err.textContent = "Hai-hai, pelan-pelan ya — kamu sudah kirim banyak dalam 1 jam terakhir, jeda dulu yuk!";
+        err.hidden=false;
       } else {
         err.textContent = "Hai-hai, belum kekirim — cek koneksi ya, coba lagi, semangat!";
         err.hidden=false;
@@ -280,7 +283,7 @@ $("#bulkSubmit").addEventListener("click", async ()=>{
   const prevText=btn.textContent;
   btn.disabled=true;
   btn.textContent="Mengirim, sebentar ya...";
-  let okCount=0, dupCount=0, failCount=0;
+  let okCount=0, dupCount=0, failCount=0, slowCount=0;
   for(const url of [...bulkValid]){
     try{
       const res=await postTweet(url);
@@ -288,14 +291,17 @@ $("#bulkSubmit").addEventListener("click", async ()=>{
       if(!res.ok){
         let m=""; try{ const j=await res.json(); m=j.message||""; }catch(_){}
         if(m && /duplicate|unique|already/i.test(m)){ dupCount++; }
+        else if(m && /1 jam lagi/i.test(m)){ slowCount++; }
         else { failCount++; console.error("[Nala Gallery] bulk submit gagal", url, res.status, m); }
         continue;
       }
       okCount++; knownUrls.add(url);
     }catch(e){ failCount++; console.error("[Nala Gallery] bulk error", url, e); }
   }
+  const slowBit=slowCount?` · pelan-pelan ya, jeda 1 jam yuk`:``;
   const t=document.createElement("div");
-  if(okCount>0) t.textContent=`Roar! ${okCount} tautan terkirim — menunggu persetujuan Nalania, tetap semangat!${dupCount?` · ${dupCount} duplikat ya`:``}${failCount?` · ${failCount} gagal, cek koneksi`:``}`;
+  if(okCount>0) t.textContent=`Roar! ${okCount} tautan terkirim — menunggu persetujuan Nalania, tetap semangat!${dupCount?` · ${dupCount} duplikat ya`:``}${failCount?` · ${failCount} gagal, cek koneksi`:``}${slowBit}`;
+  else if(slowCount>0) t.textContent=`Hai-hai, pelan-pelan ya — kebanyakan kirim dalam 1 jam terakhir, jeda dulu yuk!`;
   else if(dupCount>0) t.textContent=`Hai-hai, semuanya duplikat — sudah ada di antrean/galeri ya!`;
   else t.textContent=`Hai-hai, belum kekirim — cek koneksi ya, coba lagi, semangat!`;
   t.className="ceria-toast";
@@ -303,8 +309,8 @@ $("#bulkSubmit").addEventListener("click", async ()=>{
   document.body.appendChild(t); setTimeout(()=>t.remove(), 2800);
   $("#bulkUrls").value="";
   $("#bulkRows").innerHTML="";
-  if(okCount>0) $("#bulkSummary").innerHTML=`Yeay! ${okCount} valid terkirim, menunggu persetujuan!${dupCount?` · ${dupCount} duplikat dilewati`:``}${failCount?` · ${failCount} gagal`:``}`;
-  else $("#bulkSummary").innerHTML=`${dupCount?dupCount+" duplikat": ""}${failCount?` · ${failCount} gagal, cek koneksi`:``} — coba lagi ya!`;
+  if(okCount>0) $("#bulkSummary").innerHTML=`Yeay! ${okCount} valid terkirim, menunggu persetujuan!${dupCount?` · ${dupCount} duplikat dilewati`:``}${failCount?` · ${failCount} gagal`:``}${slowCount?` · ${slowCount} kena jeda 1 jam`:``}`;
+  else $("#bulkSummary").innerHTML=`${dupCount?dupCount+" duplikat": ""}${failCount?` · ${failCount} gagal, cek koneksi`:``}${slowCount?` · ${slowCount} kena jeda 1 jam, istirahat dulu ya`:``} — coba lagi ya!`;
   $("#bulkSubmit").hidden=true;
   btn.disabled=false; btn.textContent=prevText;
   bulkValid=[];
