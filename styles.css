@@ -750,3 +750,20 @@ button,input{font:inherit}
 @media(max-width:640px){
   .admin-image-preview-strip{grid-template-columns:repeat(2,1fr)}
 }
+/* ── OPS LAYOUT (n4l4) — anchor + ritme seksi, token lama saja ── */
+.ops-stats{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.ops-stats-divider{width:1px;align-self:stretch;background:var(--line)}
+.ops-section{margin-top:20px}
+.ops-fold{margin-top:20px;border:1px solid var(--line);border-radius:12px;background:var(--paper-2);padding:0}
+.ops-fold>summary{list-style:none;cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px;border-radius:12px}
+.ops-fold>summary::-webkit-details-marker{display:none}
+.ops-fold>summary::before{content:"+";display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:999px;border:1.5px solid var(--ink);font-weight:900;font-size:13px;line-height:1}
+.ops-fold[open]>summary::before{content:"–"}
+.ops-fold>summary:focus-visible{outline:1.5px solid var(--field);outline-offset:2px;box-shadow:0 0 0 4px var(--field-soft)}
+.ops-fold>summary h4{margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)}
+.ops-fold-body{padding:0 12px 12px}
+.ops-count{font-size:10px;font-weight:800;letter-spacing:.06em;background:var(--ink);color:var(--paper);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.ops-hint{margin:4px 0 0;font-size:11px;color:var(--muted);font-weight:600}
+@media(max-width:640px){
+  .ops-stats-divider{display:none}
+}

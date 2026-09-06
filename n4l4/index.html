@@ -50,9 +50,10 @@
         </div>
 
         <div id="queueWrap" hidden>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="ops-stats" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span class="status" id="pendingCount">0 menunggu</span>
+              <span class="ops-stats-divider" aria-hidden="true"></span>
               <span class="status" style="background:var(--paper)">Disetujui: <b id="approvedCount">0</b></span>
               <span class="status" style="background:var(--paper)">Ditolak: <b id="rejectedCount">0</b></span>
             </div>
@@ -62,17 +63,23 @@
               <button class="btn small" id="logoutBtn" type="button" style="border-color:var(--field);color:var(--field)">Keluar</button>
             </div>
           </div>
-          <div id="reportsPanel" style="margin-bottom:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2);display:none">
-            <h4 style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Laporan tautan mati dari Nalania, makasih ya!</h4>
-            <p style="margin:4px 0 0;font-size:11px;color:var(--muted);font-weight:600">Item yang dilaporin ≥1 kali muncul di sini biar owner bisa tinjau ya.</p>
+          <section class="ops-section" aria-label="Laporan tautan mati">
+          <div id="reportsPanel" style="margin-bottom:0;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2);display:none">
+            <h4 style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Laporan tautan mati dari Nalania, makasih ya! <span class="ops-count" id="reportsCount">0</span></h4>
+            <p class="ops-hint">Item yang dilaporin ≥1 kali muncul di sini biar owner bisa tinjau ya.</p>
             <div id="reportsList" style="margin-top:8px;display:grid;gap:6px" role="list"></div>
           </div>
+          </section>
+          <section class="ops-section" aria-label="Antrean kurasi">
           <div class="queue" id="queue" role="list"></div>
-          <div id="rejectedPanel" style="margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2)">
-            <h4 style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Daftar ditolak — bisa dipulihkan atau dihapus permanen ya!</h4>
-            <p style="margin:4px 0 0;font-size:11px;color:var(--muted);font-weight:600">Pulihkan buat balikin ke antrean, hapus permanen buat buang sekalian foto & laporannya.</p>
+          </section>
+          <details class="ops-fold" id="rejectedFold">
+            <summary><h4>Daftar ditolak</h4><span class="ops-count" id="rejectedFoldCount">0</span></summary>
+            <div class="ops-fold-body">
+            <p class="ops-hint">Pulihkan buat balikin ke antrean, hapus permanen buat buang sekalian foto & laporannya.</p>
             <div id="rejectedList" style="margin-top:8px;display:grid;gap:6px" role="list"></div>
-          </div>
+            </div>
+          </details>
         </div>
       </div>
     </div>
@@ -435,8 +442,10 @@ async function fetchReports(){
     const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?select=*,tweets(author,handle,url,is_dead)`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
+    const rc0=$("#reportsCount");
     if(!rows || rows.length===0){
       panel.style.display="none";
+      if(rc0) rc0.textContent="0";
       return;
     }
     const counts={};
@@ -445,6 +454,8 @@ async function fetchReports(){
       if(tid) counts[tid]=(counts[tid]||0)+1;
     });
     const ids=Object.keys(counts);
+    const rc1=$("#reportsCount");
+    if(rc1) rc1.textContent=String(ids.length);
     if(!ids.length){ panel.style.display="none"; return; }
     panel.style.display="block";
     list.innerHTML="";
@@ -517,6 +528,8 @@ async function fetchRejected(){
     rejectedCount=rejected.length;
     const rc=$("#rejectedCount");
     if(rc) rc.textContent=String(rejectedCount);
+    const rfc=$("#rejectedFoldCount");
+    if(rfc) rfc.textContent=String(rejectedCount);
     renderRejected();
   }catch(err){
     console.error("[Nala Admin] gagal memuat ditolak", err);
@@ -565,10 +578,12 @@ async function restoreRejected(id, btn){
       body: JSON.stringify({ status:"pending" })
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    rejected=rejected.filter(p=>p.id!==key);
+    rejected=rejected.filter(p=>String(p.id)!==String(key));
     rejectedCount=rejected.length;
     const rc=$("#rejectedCount");
     if(rc) rc.textContent=String(rejectedCount);
+    const rfc=$("#rejectedFoldCount");
+    if(rfc) rfc.textContent=String(rejectedCount);
     renderRejected();
     fetchPending();
     showToast("Dipulihkan ke antrean — cek di atas ya!", true);
@@ -589,10 +604,12 @@ async function deleteRejected(id, btn){
       headers: authHeaders()
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    rejected=rejected.filter(p=>p.id!==key);
+    rejected=rejected.filter(p=>String(p.id)!==String(key));
     rejectedCount=rejected.length;
     const rc=$("#rejectedCount");
     if(rc) rc.textContent=String(rejectedCount);
+    const rfc=$("#rejectedFoldCount");
+    if(rfc) rfc.textContent=String(rejectedCount);
     renderRejected();
     showToast("Dihapus permanen — dadah!", false);
   }catch(err){
@@ -727,6 +744,8 @@ async function reject(id){
     draftMap.delete(String(id));
     renderQueue();
     fetchRejected();
+    const fold=document.getElementById("rejectedFold");
+    if(fold) fold.open=true;
     showToast("Sudah ditolak, makasih ya — tetap semangat!", false);
   }catch(err){
     console.error("[Nala Admin] reject gagal", err);
@@ -789,6 +808,10 @@ $("#logoutBtn").addEventListener("click",()=>{
   pending=[];
   rejected=[];
   approvedCount=0; rejectedCount=0;
+  const rfc0=$("#rejectedFoldCount");
+  if(rfc0) rfc0.textContent="0";
+  const rpc0=$("#reportsCount");
+  if(rpc0) rpc0.textContent="0";
   $("#queueWrap").hidden=true;
   $("#gate").hidden=false;
   $("#gatePass").value="";
