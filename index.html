@@ -894,7 +894,9 @@ function stepViewer(dir){
   }
   preloadViewerTweet(next);
 }
+let photoBusy = false;
 function stepPhoto(dir){
+  if(photoBusy) return;
   const p = visible[viewerIndex];
   if(!p) return;
   const nPhotos = p.photos ? p.photos.length : 1;
@@ -903,16 +905,31 @@ function stepPhoto(dir){
   const track = $("#viewerTrack");
   const active = track.querySelector(".viewer-photo.active");
   if(!active) return;
-   const media = active.querySelector(".frame-media");
-  if(media) media.innerHTML = mediaHtml(p, viewerPhotoIndex, {viewer:true});
+  const media = active.querySelector(".frame-media");
   const vf = active.querySelector(".viewer-frame");
-  if(vf){
-    const pid2 = (p.photos && p.photos[viewerPhotoIndex] && p.photos[viewerPhotoIndex].pid) ? p.photos[viewerPhotoIndex].pid : `${p.id}-${viewerPhotoIndex+1}`;
-    vf.className = "viewer-frame " + getFrameVariant(p, pid2);
-  }
-  updatePhotoPager();
-  updateDownloadHandler();
-  preloadAdjacentPhotos(p, viewerPhotoIndex);
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const doSwap = ()=>{
+    if(media) media.innerHTML = mediaHtml(p, viewerPhotoIndex, {viewer:true});
+    if(vf){
+      const pid2 = (p.photos && p.photos[viewerPhotoIndex] && p.photos[viewerPhotoIndex].pid) ? p.photos[viewerPhotoIndex].pid : `${p.id}-${viewerPhotoIndex+1}`;
+      vf.className = "viewer-frame " + getFrameVariant(p, pid2);
+    }
+    updatePhotoPager();
+    updateDownloadHandler();
+    preloadAdjacentPhotos(p, viewerPhotoIndex);
+  };
+  if(!media || reduceMotion){ doSwap(); return; }
+  photoBusy=true;
+  setTimeout(()=>{ photoBusy=false; }, 400);
+  const exitCls = dir>0 ? "photo-exit-next" : "photo-exit-prev";
+  const enterCls = dir>0 ? "photo-enter-next" : "photo-enter-prev";
+  media.classList.add(exitCls);
+  setTimeout(()=>{
+    doSwap();
+    media.classList.remove(exitCls);
+    media.classList.add(enterCls);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ media.classList.remove(enterCls); }));
+  }, 150);
 }
 function updatePhotoPager(){
   const p = visible[viewerIndex];
