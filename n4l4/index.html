@@ -752,15 +752,22 @@ async function restoreRejected(id, btn){
   }
 }
 function confirmDanger(opts){
-  const o=Object.assign({title:"Yakin?", body:"", detail:"", confirmLabel:"Hapus permanen", cancelLabel:"Batalkan aja", altLabel:""}, opts||{});
+  const o=Object.assign({body:"", detail:"", photos:null, confirmLabel:"Hapus permanen", cancelLabel:"Batalkan aja", altLabel:""}, opts||{});
   return new Promise(resolve=>{
     const prevFocus=document.activeElement;
     const scrim=document.createElement("div");
     scrim.className="confirm-scrim";
+    const strip=Array.isArray(o.photos)&&o.photos.length
+      ? `<div class="confirm-strip" aria-hidden="true">${o.photos.slice(0,3).map(s=>`<img src="${esc(s)}" alt="" loading="lazy" onerror="this.remove()">`).join("")}</div>`
+      : ``;
     scrim.innerHTML=`
       <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmBody">
-        <h3 class="confirm-title" id="confirmTitle">${esc(o.title)}</h3>
+        <div class="confirm-mane" aria-hidden="true"></div>
+        <div class="confirm-front">
+        <div class="confirm-seal" aria-hidden="true">!</div>
+        <h3 class="confirm-title" id="confirmTitle">Hapus <mark>permanen</mark>?</h3>
         ${o.detail ? `<p class="confirm-detail">${esc(o.detail)}</p>` : ``}
+        ${strip}
         <p class="confirm-body" id="confirmBody">${esc(o.body)}</p>
         <svg class="confirm-brush" viewBox="0 0 1200 22" preserveAspectRatio="none" aria-hidden="true"><path d="M0 11 C 140 7, 260 15, 380 11 S 620 5, 740 11 S 980 17, 1100 11 L1200 11" stroke="#0E7C86" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".13"/><path d="M0 12 C 180 14, 320 8, 480 12 S 760 16, 900 12 S 1140 10, 1200 12" stroke="#0F0F0E" stroke-width=".7" fill="none" stroke-linecap="round" opacity=".07"/></svg>
         <div class="confirm-actions">
@@ -769,6 +776,7 @@ function confirmDanger(opts){
           <button class="btn confirm-danger-btn" type="button" data-confirm-ok>${esc(o.confirmLabel)}</button>
         </div>
         <p class="confirm-whisper">yang berani itu yang yakin dulu kok.</p>
+        </div>
       </div>`;
     const box=scrim.firstElementChild;
     function close(val){
@@ -798,6 +806,11 @@ function confirmDanger(opts){
     box.querySelector("[data-confirm-cancel]").focus();
   });
 }
+function dangerPhotos(list, key){
+  const it=(list||[]).find(p=>String(p.id)===String(key));
+  const arr=((it&&it.photos)||[]).map(ph=>ph.image_url_large||ph.image_url_orig).filter(src=>safeHttpUrl(src));
+  return arr.slice(0,3);
+}
 function dangerDetail(list, key){
   const it=(list||[]).find(p=>String(p.id)===String(key));
   if(!it) return "";
@@ -806,7 +819,7 @@ function dangerDetail(list, key){
 }
 async function deleteRejected(id, btn){
   const key=String(id);
-  const go=await confirmDanger({title:"Hapus permanen?", body:"Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!", detail:dangerDetail(rejected,key)});
+  const go=await confirmDanger({body:"Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!", detail:dangerDetail(rejected,key), photos:dangerPhotos(rejected,key)});
   if(!go) return;
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
@@ -936,7 +949,7 @@ async function restoreArsip(id, btn){
 }
 async function deleteArsip(id, btn){
   const key=String(id);
-  const go=await confirmDanger({title:"Hapus permanen?", body:"Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!", detail:dangerDetail(arsip,key)});
+  const go=await confirmDanger({body:"Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!", detail:dangerDetail(arsip,key), photos:dangerPhotos(arsip,key)});
   if(!go) return;
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
@@ -1040,7 +1053,7 @@ async function archiveGalleryTweet(id, btn){
 }
 async function deleteGalleryTweet(id, btn){
   const key=String(id);
-  const go=await confirmDanger({title:"Hapus permanen?", body:"Hapus permanen dari galeri beserta foto & laporannya? Arsipkan dulu aja kalau ragu — yang ini nggak bisa dibalikin!", detail:dangerDetail(gallery,key), altLabel:"Arsipkan saja"});
+  const go=await confirmDanger({body:"Hapus permanen dari galeri beserta foto & laporannya? Arsipkan dulu aja kalau ragu — yang ini nggak bisa dibalikin!", detail:dangerDetail(gallery,key), photos:dangerPhotos(gallery,key), altLabel:"Arsipkan saja"});
   if(go==="alt"){ await archiveGalleryTweet(key, btn); return; }
   if(!go) return;
   const prevText=btn?btn.textContent:"";
