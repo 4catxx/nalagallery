@@ -290,21 +290,20 @@ function getFrameVariantByIds(handle, id, pid){
   const idx = Math.abs(h) % FRAME_VARIANTS.length;
   return FRAME_VARIANTS[idx];
 }
-// SPOTLIGHT_DERIVATION_RULE: top3 latest photos where handle is Nala_JKT48 sort by tweet date desc take3 LIVE from data grows automatically no filler slots today1 R1
+// SPOTLIGHT_DERIVATION_RULE: top3 latest TWEETS where handle is Nala_JKT48 (1 card = 1 tweet, cover = photo 1) sort by tweet date desc take3 LIVE from data grows automatically no filler
 function getSpotlightPhotos(){
   const nala = photos.filter(p=>p.handle==="Nala_JKT48");
-  const flat=[];
-  nala.forEach(t=>{
-    const arr = t.photos || [{pid:`${t.id}-1`}];
-    arr.forEach((ph, i)=> flat.push({tweet:t, photo:ph, photoIdx:i, pid:ph.pid || `${t.id}-${i}`, dateMs: getTime(t)}));
+  const sorted=[...nala].sort((a,b)=>{
+    const ta=getTime(a), tb=getTime(b);
+    if(ta===null && tb===null) return 0;
+    if(ta===null) return 1;
+    if(tb===null) return -1;
+    return tb-ta;
   });
-  flat.sort((a,b)=>{
-    if(a.dateMs===null && b.dateMs===null) return 0;
-    if(a.dateMs===null) return 1;
-    if(b.dateMs===null) return -1;
-    return b.dateMs - a.dateMs;
+  return sorted.slice(0,3).map(t=>{
+    const ph=(t.photos && t.photos[0]) ? t.photos[0] : {pid:`${t.id}-1`};
+    return {tweet:t, photo:ph, photoIdx:0, pid:ph.pid || `${t.id}-0`, dateMs:getTime(t)};
   });
-  return flat.slice(0,3);
 }
 function renderSpotlight(){
   const grid=document.getElementById("spotlightGrid");
@@ -319,13 +318,14 @@ function renderSpotlight(){
   items.forEach(entry=>{
     const t=entry.tweet, pid=entry.pid;
     const variant=getFrameVariant(t, pid);
+    const nPhotos=t.photos ? t.photos.length : 1;
     const btn=document.createElement("button");
     btn.type="button";
     btn.className=`card spotlight ${variant}`;
     btn.setAttribute("role","listitem");
     btn.setAttribute("aria-label",`Buka foto ${t.caption.slice(0,40)} oleh ${t.photographer} ${t.date} — DARI NALA`);
     btn.innerHTML=`
-      <span class="card-media">${mediaHtml(t, entry.photoIdx, {fit:"xMidYMid meet"})}<span class="badge-sintetis" style="background:var(--field);color:var(--paper);border-color:var(--field)">DARI NALA</span></span>
+      <span class="card-media">${mediaHtml(t, entry.photoIdx, {fit:"xMidYMid meet"})}<span class="badge-sintetis" style="background:var(--field);color:var(--paper);border-color:var(--field)">DARI NALA</span>${nPhotos>1 ? `<span class="badge-multi" aria-label="${nPhotos} foto dalam tweet">+${nPhotos-1} foto</span>` : ``}</span>
       <span class="card-body"><span class="card-title">${esc(t.captionReal || t.caption)}</span><span class="card-meta"><span class="meta-pill">${esc(t.date||"")}</span><span class="meta-pill">@${esc(t.handle)}</span></span></span>
     `;
     btn.addEventListener("click", ()=> openSpotlightPhoto(t.id, entry.photoIdx));
