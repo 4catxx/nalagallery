@@ -352,10 +352,6 @@ function openSpotlightPhoto(tweetId, photoIdx){
         if(vf){ vf.className="viewer-frame "+getFrameVariant(p, p.photos[photoIdx] ? p.photos[photoIdx].pid : `${p.id}-${photoIdx}`); }
         updatePhotoPager();
         updateDownloadHandler();
-        const pv=document.getElementById("photoPrev");
-        const nx=document.getElementById("photoNext");
-        if(pv) pv.onclick=()=>stepPhoto(-1);
-        if(nx) nx.onclick=()=>stepPhoto(1);
       }
     }
     updateViewerChrome();
@@ -922,10 +918,13 @@ function updatePhotoPager(){
   const p = visible[viewerIndex];
   if(!p) return;
   const nPhotos = p.photos ? p.photos.length : 1;
-  const label = document.getElementById("photoCounter");
-  const dots = document.getElementById("photoDots");
-  const prevBtn = document.getElementById("photoPrev");
-  const nextBtn = document.getElementById("photoNext");
+  const trackEl2=$("#viewerTrack");
+  const activeNode2=trackEl2 ? trackEl2.querySelector(".viewer-photo.active") : null;
+  const scopeNode2=activeNode2 || document;
+  const label = scopeNode2.querySelector("#photoCounter");
+  const dots = scopeNode2.querySelector("#photoDots");
+  const prevBtn = scopeNode2.querySelector("#photoPrev");
+  const nextBtn = scopeNode2.querySelector("#photoNext");
   if(label){
     if(nPhotos>1) label.textContent = `Foto ${viewerPhotoIndex+1} dari ${nPhotos}`;
     else label.textContent = `1 foto`;
@@ -1012,11 +1011,6 @@ function renderViewer(first){
   node.classList.add("active");
   track.appendChild(node);
   updateViewerChrome();
-  // bind in-tweet photo nav DISTINCT from tweet arrows (small dots under photo; keyboard , . for in-tweet photos, arrows stay tweet-level)
-  const pv = document.getElementById("photoPrev");
-  const nx = document.getElementById("photoNext");
-  if(pv) pv.addEventListener("click", ()=> stepPhoto(-1));
-  if(nx) nx.addEventListener("click", ()=> stepPhoto(1));
   const cur=visible[viewerIndex];
   if(cur) preloadAdjacentPhotos(cur, viewerPhotoIndex);
   preloadViewerTweet(viewerIndex);
@@ -1033,7 +1027,10 @@ function updateViewerChrome(){
   dots.innerHTML = visible.map((_,i)=>`<span class="dot ${i===viewerIndex ? "on":""}" aria-hidden="true"></span>`).join("");
   updatePhotoPager();
   updateDownloadHandler();
-  const vrBtn=document.querySelector("[data-report-viewer]");
+  const trackEl=$("#viewerTrack");
+  const activeNode=trackEl ? trackEl.querySelector(".viewer-photo.active") : null;
+  const scopeNode=activeNode || document;
+  const vrBtn=scopeNode.querySelector("[data-report-viewer]");
   if(vrBtn){
     vrBtn.addEventListener("click", async ()=>{
       const id=vrBtn.getAttribute("data-report-viewer");
@@ -1054,9 +1051,9 @@ function updateViewerChrome(){
       }
     });
   }
-  // re-bind photo nav after chrome update (dots remain)
-  const pv = document.getElementById("photoPrev");
-  const nx = document.getElementById("photoNext");
+  // re-bind photo nav after chrome update — scoped to active node (ids repeat during transitions)
+  const pv = scopeNode.querySelector("#photoPrev");
+  const nx = scopeNode.querySelector("#photoNext");
   if(pv) pv.onclick = ()=> stepPhoto(-1);
   if(nx) nx.onclick = ()=> stepPhoto(1);
 }
