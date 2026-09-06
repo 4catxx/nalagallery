@@ -220,7 +220,7 @@ function mapTweetRow(row){
     date: dateStr,
     curatedAt: curatedStr,
     era: year ? `Era ${year}` : "Era —",
-    badge: handleClean==="Nala_JKT48" ? "DARI NALA" : "FOTO MENYUSUL",
+    badge: handleClean==="Nala_JKT48" ? "DARI NALA" : (photosArr.some(ph=>ph.image_url_large||ph.image_url_orig) ? "" : "FOTO MENYUSUL"),
     isReal: true,
     deleted: false,
     accent: handleClean==="Nala_JKT48" ? "#0E7C86" : "#E2F2EF",
@@ -667,7 +667,7 @@ function renderGrid(){
     el.setAttribute("role","listitem");
     el.innerHTML = `
       <div class="card-media">
-        ${p.isReal ? `<span class="badge-sintetis" style="${p.badge==='DARI NALA' ? `background:var(--field);color:var(--paper)` : `background:var(--paper);color:var(--muted)`}">${esc(p.badge)}</span>` : `<span class="badge-sintetis">SINTETIS</span>`}
+        ${p.isReal ? (p.badge ? `<span class="badge-sintetis" style="${p.badge==='DARI NALA' ? `background:var(--field);color:var(--paper)` : `background:var(--paper);color:var(--muted)`}">${esc(p.badge)}</span>` : ``) : `<span class="badge-sintetis">SINTETIS</span>`}
         ${nPhotos>1 ? `<span class="badge-multi" aria-label="${nPhotos} foto dalam tweet">+${nPhotos-1} foto</span>` : ``}
         ${mediaHtml(p, 0)}
         ${p.deleted ? `<div class="badge-dead"><span>Cuplikan tersimpan — sumber mati</span><span style="background:var(--accent);color:var(--ink);padding:3px 7px;border-radius:999px;font-size:10px;border:1px solid var(--ink)">ARSIP</span></div>` : ``}
@@ -678,7 +678,7 @@ function renderGrid(){
           <span class="meta-pill">${esc(p.era)}</span>
           ${p.date ? `<span class="meta-pill">${esc(p.date)}</span>` : ``}
           <span class="meta-pill curated-pill">Dikurasi ${esc(p.curatedAt||"—")}</span>
-          ${p.isReal ? `<span class="meta-pill" style="background:var(--paper);border-color:var(--ink)">${p.badge==='DARI NALA' ? `DARI NALA` : `FOTO MENYUSUL`}</span>` : ``}
+          ${p.isReal && p.badge ? `<span class="meta-pill" style="background:var(--paper);border-color:var(--ink)">${esc(p.badge)}</span>` : ``}
           ${nPhotos>1 ? `<span class="meta-pill" style="background:var(--paper);border-color:var(--ink)">`+esc(extra)+`</span>` : ``}
           ${p.deleted ? `<span class="meta-pill" style="background:var(--ink);color:var(--paper);border-color:var(--ink)">Sumber mati</span>` : (p.isReal ? `` : `<span class="meta-pill">HD on demand</span>`)}
           ${getReportCount(p.id)>0 ? `<span class="reported-flag">Dilaporkan · ${getReportCount(p.id)}</span>` : ``}
@@ -972,7 +972,7 @@ function buildViewerPhoto(p, idx, photoIdx){
       </div>` : ``}
       <div class="frame-bar">
         <div>
-          <div class="author">${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``} <span style="font-weight:600;color:var(--muted)">· ${esc(p.era)}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${p.isReal ? `<span style="background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">${esc(p.badge)}</span>` : `<span style="background:var(--paper);color:var(--muted);border:1px solid var(--line);padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">SINTETIS</span>`} <span class="meta-pill curated-pill" style="margin-left:6px">Dikurasi ${esc(p.curatedAt||"—")}</span></div>
+          <div class="author">${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``} <span style="font-weight:600;color:var(--muted)">· ${esc(p.era)}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${p.isReal ? (p.badge ? `<span style="background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">${esc(p.badge)}</span>` : ``) : `<span style="background:var(--paper);color:var(--muted);border:1px solid var(--line);padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">SINTETIS</span>`} <span class="meta-pill curated-pill" style="margin-left:6px">Dikurasi ${esc(p.curatedAt||"—")}</span></div>
           <div class="caption">${esc(p.caption)}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1008,7 +1008,7 @@ function updateViewerChrome(){
   $("#vCounter").textContent = `${viewerIndex+1} / ${visible.length}`;
   $("#vEra").textContent = p.era;
   $("#vAuthor").textContent = p.isReal && p.handle ? `@${p.handle}` : p.photographer;
-  $("#vCredit").innerHTML = `<b>${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``}</b> <span>— ${esc(p.caption.slice(0,88))}${p.caption.length>88 ? "…" : ""}${p.date ? ` · ${esc(p.date)}` : ``}</span> <a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;color:var(--accent)">${p.deleted ? "sumber mati (cuplikan disimpan)" : "sumber"} ↗</a> ${p.isReal ? `<span style="opacity:.9;background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:1px 6px;border-radius:999px;font-size:10px;font-weight:900">· ${esc(p.badge)}</span>` : `<span style="opacity:.7">· SINTETIS</span>`} ${nPhotos>1 ? `<span style="opacity:.9;background:var(--paper);border:1px solid var(--line);padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700">· Foto ${viewerPhotoIndex+1} dari ${nPhotos}</span>` : ``}`;
+  $("#vCredit").innerHTML = `<b>${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``}</b> <span>— ${esc(p.caption.slice(0,88))}${p.caption.length>88 ? "…" : ""}${p.date ? ` · ${esc(p.date)}` : ``}</span> <a href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;color:var(--accent)">${p.deleted ? "sumber mati (cuplikan disimpan)" : "sumber"} ↗</a> ${p.isReal ? (p.badge ? `<span style="opacity:.9;background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:1px 6px;border-radius:999px;font-size:10px;font-weight:900">· ${esc(p.badge)}</span>` : ``) : `<span style="opacity:.7">· SINTETIS</span>`} ${nPhotos>1 ? `<span style="opacity:.9;background:var(--paper);border:1px solid var(--line);padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700">· Foto ${viewerPhotoIndex+1} dari ${nPhotos}</span>` : ``}`;
   const dots = $("#vDots");
   dots.innerHTML = visible.map((_,i)=>`<span class="dot ${i===viewerIndex ? "on":""}" aria-hidden="true"></span>`).join("");
   updatePhotoPager();
