@@ -68,6 +68,11 @@
             <div id="reportsList" style="margin-top:8px;display:grid;gap:6px" role="list"></div>
           </div>
           <div class="queue" id="queue" role="list"></div>
+          <div id="rejectedPanel" style="margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper-2)">
+            <h4 style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)">Daftar ditolak — bisa dipulihkan atau dihapus permanen ya!</h4>
+            <p style="margin:4px 0 0;font-size:11px;color:var(--muted);font-weight:600">Pulihkan buat balikin ke antrean, hapus permanen buat buang sekalian foto & laporannya.</p>
+            <div id="rejectedList" style="margin-top:8px;display:grid;gap:6px" role="list"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -300,6 +305,7 @@ async function autoFetchImages(id){
   }
 }
 let pending = [];
+let rejected = [];
 let approvedCount = 0, rejectedCount = 0;
 let accessToken = null;
 try{ accessToken = sessionStorage.getItem("nala-admin-token"); }catch(e){}
@@ -413,6 +419,8 @@ async function fetchPending(){
     pending = (rows||[]).map(mapPendingRow);
     renderQueue();
     fetchReports();
+    fetchRejected();
+    fetchApprovedCount();
   }catch(err){
     console.error("[Nala Admin] gagal memuat antrean", err);
     if(q) q.innerHTML=`<div class="empty"><b>Hai-hai, belum bisa muat antrean — cek koneksi ya!</b><span style="font-size:11px;letter-spacing:.04em;color:var(--muted)">tidak bisa memuat antrean, cek koneksi</span></div>`;
@@ -499,6 +507,100 @@ async function clearTweetReports(id, btn){
     if(btn){ btn.disabled=false; btn.textContent=prevText; }
   }
 }
+async function fetchRejected(){
+  const list=$("#rejectedList");
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.rejected&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows=await res.json();
+    rejected=(rows||[]).map(mapPendingRow);
+    rejectedCount=rejected.length;
+    const rc=$("#rejectedCount");
+    if(rc) rc.textContent=String(rejectedCount);
+    renderRejected();
+  }catch(err){
+    console.error("[Nala Admin] gagal memuat ditolak", err);
+    if(list) list.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Belum bisa muat daftar ditolak — cek koneksi ya!</span>`;
+  }
+}
+async function fetchApprovedCount(){
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&select=id`, { headers: authHeaders() });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows=await res.json();
+    approvedCount=Array.isArray(rows)?rows.length:0;
+    const ac=$("#approvedCount");
+    if(ac) ac.textContent=String(approvedCount);
+  }catch(err){
+    console.error("[Nala Admin] gagal hitung disetujui", err);
+  }
+}
+function renderRejected(){
+  const list=$("#rejectedList");
+  if(!list) return;
+  list.innerHTML="";
+  if(rejected.length===0){
+    list.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Belum ada yang ditolak — bersih, Roar!</span>`;
+    return;
+  }
+  rejected.forEach(item=>{
+    const nPhotos=item.photos?item.photos.length:0;
+    const row=document.createElement("div");
+    row.className="notice";
+    row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
+    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span><br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-rejected="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Pulihkan</button><button class="btn small" type="button" data-delete-rejected="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll("[data-restore-rejected]").forEach(b=> b.addEventListener("click", ()=> restoreRejected(b.getAttribute("data-restore-rejected"), b)));
+  list.querySelectorAll("[data-delete-rejected]").forEach(b=> b.addEventListener("click", ()=> deleteRejected(b.getAttribute("data-delete-rejected"), b)));
+}
+async function restoreRejected(id, btn){
+  const key=String(id);
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Memulihkan..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+      method:"PATCH",
+      headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
+      body: JSON.stringify({ status:"pending" })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    rejected=rejected.filter(p=>p.id!==key);
+    rejectedCount=rejected.length;
+    const rc=$("#rejectedCount");
+    if(rc) rc.textContent=String(rejectedCount);
+    renderRejected();
+    fetchPending();
+    showToast("Dipulihkan ke antrean — cek di atas ya!", true);
+  }catch(err){
+    console.error("[Nala Admin] pulihkan gagal", err);
+    showToast("Hai-hai, belum bisa memulihkan — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent=prevText; }
+  }
+}
+async function deleteRejected(id, btn){
+  const key=String(id);
+  if(!confirm("Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!")) return;
+  const prevText=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+      method:"DELETE",
+      headers: authHeaders()
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    rejected=rejected.filter(p=>p.id!==key);
+    rejectedCount=rejected.length;
+    const rc=$("#rejectedCount");
+    if(rc) rc.textContent=String(rejectedCount);
+    renderRejected();
+    showToast("Dihapus permanen — dadah!", false);
+  }catch(err){
+    console.error("[Nala Admin] hapus permanen gagal", err);
+    showToast("Hai-hai, belum bisa menghapus — cek koneksi ya, coba lagi!", false);
+    if(btn){ btn.disabled=false; btn.textContent=prevText; }
+  }
+}
 function renderQueue(){
   const q=$("#queue");
   q.innerHTML="";
@@ -569,7 +671,6 @@ function renderQueue(){
     q.querySelectorAll("[data-reject]").forEach(b=> b.addEventListener("click", ()=> reject(b.getAttribute("data-reject"))));
   }
   $("#pendingCount").textContent = `${pending.length} menunggu dikurasi, semangat!`;
-  // approved/rejected counts kept 0 for now — could fetch separate counts if needed
   $("#approvedCount").textContent = String(approvedCount);
   $("#rejectedCount").textContent = String(rejectedCount);
 }
@@ -602,9 +703,9 @@ async function approve(id){
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     draftMap.delete(String(id));
-    pending = pending.filter(p=>p.id!==id);
-    approvedCount++;
+    pending = pending.filter(p=>String(p.id)!==String(id));
     renderQueue();
+    fetchApprovedCount();
     showToast(`Roar! Disetujui — tetap semangat!`, true);
   }catch(err){
     console.error("[Nala Admin] approve gagal", err);
@@ -622,9 +723,10 @@ async function reject(id){
       body: JSON.stringify({ status:"rejected" })
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    pending = pending.filter(p=>p.id!==id);
-    rejectedCount++;
+    pending = pending.filter(p=>String(p.id)!==String(id));
+    draftMap.delete(String(id));
     renderQueue();
+    fetchRejected();
     showToast("Sudah ditolak, makasih ya — tetap semangat!", false);
   }catch(err){
     console.error("[Nala Admin] reject gagal", err);
@@ -685,6 +787,8 @@ $("#logoutBtn").addEventListener("click",()=>{
   accessToken=null;
   try{ sessionStorage.removeItem("nala-admin-token"); }catch(_){}
   pending=[];
+  rejected=[];
+  approvedCount=0; rejectedCount=0;
   $("#queueWrap").hidden=true;
   $("#gate").hidden=false;
   $("#gatePass").value="";
