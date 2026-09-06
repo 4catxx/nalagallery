@@ -757,6 +757,12 @@ button,input{font:inherit}
 .admin-image-preview-strip span{font-size:11px;color:var(--muted);font-weight:600;line-height:1.4}
 @media(max-width:640px){
   .admin-image-preview-strip{grid-template-columns:repeat(2,1fr)}
+  .site-head{flex-wrap:wrap;gap:10px;padding:10px 14px}
+  .brand-type span{font-size:9.5px}
+  .meta-counter{white-space:nowrap}
+  .hero-type .stroke{color:var(--field);-webkit-text-fill-color:rgba(14,124,134,.10)}
+  .toolbar{padding:14px;top:0}
+  #sortSel{flex:1 1 auto;min-width:0;max-width:100%}
 }
 /* ── OPS LAYOUT (n4l4) — anchor + ritme seksi, token lama saja ── */
 .ops-stats{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
