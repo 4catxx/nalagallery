@@ -369,6 +369,7 @@ async function autoFetchImages(id){
     if(meta){
       draftMeta.set(key, meta);
       renderMetaPreview(key);
+      updateQueueMetaFor(key);
     }
     showToast(urls.length ? `Dapat ${urls.length} foto${meta ? " + caption" : ""}, cek ya!` : "Caption ketarik — fotonya tempel manual ya!", true);
   }catch(err){
@@ -404,6 +405,28 @@ function authHeaders(){
   if(accessToken) h.Authorization = `Bearer ${accessToken}`;
   return h;
 }
+let sessionExpiredNoticed=false;
+async function apiFetch(url, opts){
+  const res=await fetch(url, opts||{});
+  const sentAuth = !!(opts && opts.headers && opts.headers.Authorization);
+  if(res.status===401 && sentAuth) handleSessionExpired();
+  return res;
+}
+function handleSessionExpired(){
+  accessToken=null;
+  try{ sessionStorage.removeItem("nala-admin-token"); }catch(_){}
+  pending=[]; rejected=[]; arsip=[]; reportRowsCache=[]; reportCountsCache={}; reportIds=[];
+  approvedCount=0; rejectedCount=0; arsipCount=0;
+  const qw=$("#queueWrap"); if(qw) qw.hidden=true;
+  const g=$("#gate"); if(g) g.hidden=false;
+  const gp=$("#gatePass"); if(gp) gp.value="";
+  try{ renderQueue(); renderRejected(); renderArsip(); renderReports(); }catch(_){}
+  if(!sessionExpiredNoticed){
+    sessionExpiredNoticed=true;
+    showToast("Sesi habis — login lagi ya, semangat!", false);
+    setTimeout(()=>{ sessionExpiredNoticed=false; },4000);
+  }
+}
 function tweetSvgSmall(){
   return `<svg viewBox="0 0 640 360" role="img" aria-label="pratinjau tweet sintetis"><rect width="640" height="360" rx="14" fill="#FFFBF2"/><rect x="14" y="14" width="612" height="332" rx="12" fill="none" stroke="#E8DDD3"/><circle cx="48" cy="48" r="18" fill="#0F0F0E"/><rect x="76" y="30" width="140" height="10" rx="5" fill="#0F0F0E" opacity=".9"/><rect x="76" y="46" width="90" height="8" rx="4" fill="#6B625C" opacity=".45"/><rect x="22" y="78" width="596" height="10" rx="5" fill="#0F0F0E" opacity=".12"/><rect x="22" y="96" width="520" height="10" rx="5" fill="#0F0F0E" opacity=".12"/><rect x="22" y="114" width="560" height="10" rx="5" fill="#0F0F0E" opacity=".08"/><rect x="22" y="150" width="596" height="168" rx="10" fill="#F2E9DE" stroke="#E8DDD3"/><text x="320" y="244" text-anchor="middle" font-size="11" font-weight="900" letter-spacing=".12em" fill="#6B625C">SINTETIS PREVIEW</text></svg>`;
 }
@@ -414,6 +437,25 @@ function tweetSvgThumb(label){
   const w = vb.split(" ")[2], h = vb.split(" ")[3];
   const cx = Math.round(parseInt(w)/2), cy = isPortrait ? 70 : isLandscape ? 56 : 68;
   return `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(label)} — SINTETIS thumb"><rect width="${w}" height="${h}" rx="10" fill="#F2E9DE" stroke="#E8DDD3"/><rect x="8" y="8" width="${parseInt(w)-16}" height="${parseInt(h)-42}" rx="8" fill="#FFFBF2" stroke="#E8DDD3"/><text x="${cx}" y="${cy}" text-anchor="middle" font-size="7" font-weight="900" letter-spacing=".08em" fill="#6B625C">SINTETIS</text><text x="${cx}" y="${parseInt(h)-14}" text-anchor="middle" font-size="6.5" font-weight="800" letter-spacing=".06em" fill="#0F0F0E">${esc(label)}</text></svg>`;
+}
+function queueMeta(id){ return draftMeta.get(String(id))||null; }
+function queueAuthor(item){ const m=queueMeta(item.id); return (m&&m.author)||item.photographer; }
+function queueCaption(item){ const m=queueMeta(item.id); return ((m&&m.caption)||item.caption); }
+function queueAvatarInner(item){
+  const m=queueMeta(item.id);
+  if(m&&m.avatar) return `<img src="${esc(m.avatar)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:999px;display:block" onerror="this.remove()">`;
+  return esc(item.photographer.slice(1,3).toUpperCase());
+}
+function updateQueueMetaFor(id){
+  const key=String(id);
+  const item=pending.find(p=>String(p.id)===key);
+  if(!item) return;
+  const av=document.querySelector(`[data-queue-avatar="${CSS.escape(key)}"]`);
+  if(av) av.innerHTML=queueAvatarInner(item);
+  const who=document.querySelector(`[data-queue-who="${CSS.escape(key)}"]`);
+  if(who){ const b=who.querySelector("b"); if(b) b.textContent=queueAuthor(item); }
+  const cap=document.querySelector(`[data-queue-caption="${CSS.escape(key)}"]`);
+  if(cap) cap.textContent=queueCaption(item);
 }
 function queueMediaHtml(item){
   const n = item.photos ? item.photos.length : 0;
@@ -495,7 +537,7 @@ async function fetchPending(){
   const q=$("#queue");
   if(q) q.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-weight:700;font-size:12px">Memuat antrean, semangat! \u00b7 Loading queue</div>`;
   try{
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.pending&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
+    const res = await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.pending&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
     pending = (rows||[]).map(mapPendingRow);
@@ -515,7 +557,7 @@ async function fetchReports(){
   const list=$("#reportsList");
   if(!panel||!list) return;
   try{
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?select=*,tweets(author,handle,url,is_dead)`, { headers: authHeaders() });
+    const res = await apiFetch(`${SUPABASE_URL}/rest/v1/reports?select=*,tweets(author,handle,url,is_dead)`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
     reportRowsCache = Array.isArray(rows)?rows:[];
@@ -571,14 +613,14 @@ async function setTweetDead(id, dead, btn){
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menyimpan..."; }
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
       method:"PATCH",
       headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
       body: JSON.stringify({ is_dead: !!dead })
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     if(dead){
-      await fetch(`${SUPABASE_URL}/rest/v1/reports?tweet_id=eq.${encodeURIComponent(key)}`, {
+      await apiFetch(`${SUPABASE_URL}/rest/v1/reports?tweet_id=eq.${encodeURIComponent(key)}`, {
         method:"DELETE",
         headers: authHeaders()
       });
@@ -602,7 +644,7 @@ async function clearTweetReports(id, btn){
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Membersihkan..."; }
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/reports?tweet_id=eq.${encodeURIComponent(key)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/reports?tweet_id=eq.${encodeURIComponent(key)}`, {
       method:"DELETE",
       headers: authHeaders()
     });
@@ -618,7 +660,7 @@ async function clearTweetReports(id, btn){
 async function fetchRejected(){
   const list=$("#rejectedList");
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.rejected&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.rejected&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows=await res.json();
     rejected=(rows||[]).map(mapPendingRow);
@@ -635,7 +677,7 @@ async function fetchRejected(){
 }
 async function fetchApprovedCount(){
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&select=id`, { headers: authHeaders() });
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&select=id`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows=await res.json();
     approvedCount=Array.isArray(rows)?rows.length:0;
@@ -671,7 +713,7 @@ async function restoreRejected(id, btn){
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Memulihkan..."; }
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
       method:"PATCH",
       headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
       body: JSON.stringify({ status:"pending" })
@@ -699,7 +741,7 @@ async function deleteRejected(id, btn){
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
       method:"DELETE",
       headers: authHeaders()
     });
@@ -755,7 +797,7 @@ function wireTabs(){
 async function fetchArsip(){
   const list=$("#arsipList");
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&is_dead=eq.true&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&is_dead=eq.true&select=*,photos(*)&order=created_at.desc`, { headers: authHeaders() });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows=await res.json();
     arsip=(rows||[]).map(mapPendingRow);
@@ -798,7 +840,7 @@ async function restoreArsip(id, btn){
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Mengembalikan..."; }
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
       method:"PATCH",
       headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
       body: JSON.stringify({ is_dead:false })
@@ -825,7 +867,7 @@ async function deleteArsip(id, btn){
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(key)}`, {
       method:"DELETE",
       headers: authHeaders()
     });
@@ -857,11 +899,11 @@ function renderQueue(){
       card.innerHTML=`
         <div class="tweet-preview">
           <div class="tweet-head">
-            <span class="avatar">${esc(item.photographer.slice(1,3).toUpperCase())}</span>
-            <div><b>${esc(item.photographer)}</b><br><span>${esc(item.era)} · ${esc(item.status||"pending")}</span></div>
+            <span class="avatar" data-queue-avatar="${esc(item.id)}">${queueAvatarInner(item)}</span>
+            <div data-queue-who="${esc(item.id)}"><b>${esc(queueAuthor(item))}</b><br><span>${esc(item.era)} · ${esc(item.status||"pending")}</span></div>
             <span class="status" style="margin-left:auto">Menunggu</span>
           </div>
-          <div class="tweet-text">${esc(item.caption)}<br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;word-break:break-all">${esc(item.tweetUrl)}</a></div>
+          <div class="tweet-text"><span data-queue-caption="${esc(item.id)}">${esc(queueCaption(item))}</span><br><a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:3px;word-break:break-all">${esc(item.tweetUrl)}</a></div>
           ${queueMediaHtml(item)}
           <small style="color:var(--muted);font-weight:600">Pratinjau — Hai-hai!${item.photos && item.photos.length>1 ? ` — ${item.photos.length} foto dalam 1 tweet, Roar!` : ``}</small>
         </div>
@@ -931,7 +973,7 @@ async function approve(id){
   if(urls.length>0){
     try{
       const payload=urls.map((u,i)=>({ tweet_id:String(id), position:i+1, image_url_orig:u, image_url_large:u }));
-      const resPhotos=await fetch(`${SUPABASE_URL}/rest/v1/photos`, {
+      const resPhotos=await apiFetch(`${SUPABASE_URL}/rest/v1/photos`, {
         method:"POST",
         headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=minimal" },
         body: JSON.stringify(payload)
@@ -953,7 +995,7 @@ async function approve(id){
       if(meta.avatar) patch.avatar_url=meta.avatar;
       if(meta.tweet_date) patch.tweet_date=meta.tweet_date;
     }
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
       method:"PATCH",
       headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=representation" },
       body: JSON.stringify(patch)
@@ -975,7 +1017,7 @@ async function reject(id){
   const btn=document.querySelector(`[data-reject="${id}"]`);
   if(btn){ btn.disabled=true; btn.textContent="Menolak..."; }
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
+    const res=await apiFetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
       method:"PATCH",
       headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=representation" },
       body: JSON.stringify({ status:"rejected" })
@@ -1015,6 +1057,7 @@ $("#gateForm").addEventListener("submit", async (e)=>{
     const data=await res.json();
     if(!data.access_token) throw new Error("no token");
     accessToken=data.access_token;
+    sessionExpiredNoticed=false;
     try{ sessionStorage.setItem("nala-admin-token", accessToken); }catch(_){}
     err.hidden=true;
     $("#gate").hidden=true;
