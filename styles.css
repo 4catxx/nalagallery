@@ -767,3 +767,13 @@ button,input{font:inherit}
 @media(max-width:640px){
   .ops-stats-divider{display:none}
 }
+/* ── OPS CONFIRM — dialog ganti confirm() browser, token dunia saja ── */
+.confirm-scrim{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:18px;background:rgba(15,15,14,.45)}
+.confirm-box{background:var(--paper);border:1.5px solid var(--ink);border-radius:18px;box-shadow:0 24px 48px rgba(15,15,14,.18);max-width:420px;width:100%;padding:20px;display:grid;gap:8px}
+.confirm-title{margin:0;font-size:18px;letter-spacing:-.03em;line-height:1;font-weight:950}
+.confirm-detail{margin:0;font-size:12px;color:var(--muted);font-weight:700}
+.confirm-body{margin:0;font-size:14px;line-height:1.5;font-weight:600}
+.confirm-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.confirm-whisper{margin:2px 0 0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:13px;line-height:1.5;color:var(--muted);text-align:center}
+.confirm-danger-btn{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.confirm-alt-btn{background:var(--field);color:var(--paper);border-color:var(--field-deep)}

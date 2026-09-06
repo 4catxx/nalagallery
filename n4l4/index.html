@@ -751,9 +751,62 @@ async function restoreRejected(id, btn){
     if(btn){ btn.disabled=false; btn.textContent=prevText; }
   }
 }
+function confirmDanger(opts){
+  const o=Object.assign({title:"Yakin?", body:"", detail:"", confirmLabel:"Hapus permanen", cancelLabel:"Batalkan aja", altLabel:""}, opts||{});
+  return new Promise(resolve=>{
+    const prevFocus=document.activeElement;
+    const scrim=document.createElement("div");
+    scrim.className="confirm-scrim";
+    scrim.innerHTML=`
+      <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmBody">
+        <h3 class="confirm-title" id="confirmTitle">${esc(o.title)}</h3>
+        ${o.detail ? `<p class="confirm-detail">${esc(o.detail)}</p>` : ``}
+        <p class="confirm-body" id="confirmBody">${esc(o.body)}</p>
+        <div class="confirm-actions">
+          <button class="btn" type="button" data-confirm-cancel>${esc(o.cancelLabel)}</button>
+          ${o.altLabel ? `<button class="btn confirm-alt-btn" type="button" data-confirm-alt>${esc(o.altLabel)}</button>` : ``}
+          <button class="btn confirm-danger-btn" type="button" data-confirm-ok>${esc(o.confirmLabel)}</button>
+        </div>
+        <p class="confirm-whisper">dipikir dulu juga boleh kok.</p>
+      </div>`;
+    const box=scrim.firstElementChild;
+    function close(val){
+      document.removeEventListener("keydown", onKey, true);
+      document.body.style.overflow="";
+      scrim.remove();
+      if(prevFocus && prevFocus.focus) prevFocus.focus();
+      resolve(val);
+    }
+    function onKey(e){
+      if(e.key==="Escape"){ e.preventDefault(); close(false); return; }
+      if(e.key!=="Tab") return;
+      const f=[...box.querySelectorAll("button")].filter(b=>!b.disabled);
+      if(!f.length) return;
+      const first=f[0], last=f[f.length-1];
+      if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+    }
+    scrim.addEventListener("mousedown", (e)=>{ if(e.target===scrim) close(false); });
+    box.querySelector("[data-confirm-cancel]").addEventListener("click", ()=> close(false));
+    box.querySelector("[data-confirm-ok]").addEventListener("click", ()=> close(true));
+    const altBtn=box.querySelector("[data-confirm-alt]");
+    if(altBtn) altBtn.addEventListener("click", ()=> close("alt"));
+    document.addEventListener("keydown", onKey, true);
+    document.body.appendChild(scrim);
+    document.body.style.overflow="hidden";
+    box.querySelector("[data-confirm-cancel]").focus();
+  });
+}
+function dangerDetail(list, key){
+  const it=(list||[]).find(p=>String(p.id)===String(key));
+  if(!it) return "";
+  const n=it.photos?it.photos.length:0;
+  return `${it.photographer||""} · ${it.era||""} · ${n} foto`;
+}
 async function deleteRejected(id, btn){
   const key=String(id);
-  if(!confirm("Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!")) return;
+  const go=await confirmDanger({title:"Hapus permanen?", body:"Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!", detail:dangerDetail(rejected,key)});
+  if(!go) return;
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
   try{
@@ -882,7 +935,8 @@ async function restoreArsip(id, btn){
 }
 async function deleteArsip(id, btn){
   const key=String(id);
-  if(!confirm("Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!")) return;
+  const go=await confirmDanger({title:"Hapus permanen?", body:"Hapus permanen tweet ini beserta foto & laporannya? Nggak bisa dibalikin ya!", detail:dangerDetail(arsip,key)});
+  if(!go) return;
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
   try{
@@ -985,7 +1039,9 @@ async function archiveGalleryTweet(id, btn){
 }
 async function deleteGalleryTweet(id, btn){
   const key=String(id);
-  if(!confirm("Hapus permanen dari galeri beserta foto & laporannya? Arsipkan dulu aja kalau ragu — yang ini nggak bisa dibalikin!")) return;
+  const go=await confirmDanger({title:"Hapus permanen?", body:"Hapus permanen dari galeri beserta foto & laporannya? Arsipkan dulu aja kalau ragu — yang ini nggak bisa dibalikin!", detail:dangerDetail(gallery,key), altLabel:"Arsipkan saja"});
+  if(go==="alt"){ await archiveGalleryTweet(key, btn); return; }
+  if(!go) return;
   const prevText=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Menghapus..."; }
   try{
