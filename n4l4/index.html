@@ -762,12 +762,13 @@ function confirmDanger(opts){
         <h3 class="confirm-title" id="confirmTitle">${esc(o.title)}</h3>
         ${o.detail ? `<p class="confirm-detail">${esc(o.detail)}</p>` : ``}
         <p class="confirm-body" id="confirmBody">${esc(o.body)}</p>
+        <svg class="confirm-brush" viewBox="0 0 1200 22" preserveAspectRatio="none" aria-hidden="true"><path d="M0 11 C 140 7, 260 15, 380 11 S 620 5, 740 11 S 980 17, 1100 11 L1200 11" stroke="#0E7C86" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".13"/><path d="M0 12 C 180 14, 320 8, 480 12 S 760 16, 900 12 S 1140 10, 1200 12" stroke="#0F0F0E" stroke-width=".7" fill="none" stroke-linecap="round" opacity=".07"/></svg>
         <div class="confirm-actions">
           <button class="btn" type="button" data-confirm-cancel>${esc(o.cancelLabel)}</button>
           ${o.altLabel ? `<button class="btn confirm-alt-btn" type="button" data-confirm-alt>${esc(o.altLabel)}</button>` : ``}
           <button class="btn confirm-danger-btn" type="button" data-confirm-ok>${esc(o.confirmLabel)}</button>
         </div>
-        <p class="confirm-whisper">dipikir dulu juga boleh kok.</p>
+        <p class="confirm-whisper">yang berani itu yang yakin dulu kok.</p>
       </div>`;
     const box=scrim.firstElementChild;
     function close(val){
