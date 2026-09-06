@@ -29,7 +29,7 @@ unreviewed and undocumented is unfinished; this build ends with the finish revie
   </a>
   <nav class="head-nav" aria-label="Navigasi utama">
     <a class="ghost" href="#galeri">Galeri</a>
-    <a class="ghost" href="#live">Live</a>
+    <a class="ghost" href="live.html">Live</a>
     <a class="primary" href="upload.html">Kirim tautan</a>
   </nav>
   <span class="meta-counter" id="counter" aria-live="polite">0 foto</span>
@@ -66,64 +66,6 @@ unreviewed and undocumented is unfinished; this build ends with the finish revie
 </section>
 <div class="brush-divider" aria-hidden="true"><svg viewBox="0 0 1200 22" preserveAspectRatio="none" aria-hidden="true"><path d="M0 11 C 140 7, 260 15, 380 11 S 620 5, 740 11 S 980 17, 1100 11 L1200 11" stroke="#0E7C86" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".13"/><path d="M0 12 C 180 14, 320 8, 480 12 S 760 16, 900 12 S 1140 10, 1200 12" stroke="#0F0F0E" stroke-width=".7" fill="none" stroke-linecap="round" opacity=".07"/></svg></div>
 <div class="painter-band" aria-hidden="true"></div>
-
-<!-- LIVE DARI NALA — timeline X resmi (embed publish.twitter.com, tanpa kunci) -->
-<section id="live" aria-labelledby="live-title" class="shell" style="padding-top:26px">
-  <div class="section-head" style="margin-bottom:14px">
-    <h2 id="live-title"><span>Roar! Langsung dari X</span>Live Nala</h2>
-    <p>Postingan terbaru Nala apa adanya dari X — yang ada fotonya bisa dikirim ke galeri lewat <a href="upload.html" style="color:var(--field);font-weight:800">Kirim tautan</a> biar dikurasi Nalania.</p>
-  </div>
-  <div class="panel" style="overflow:hidden">
-    <div class="panel-body">
-      <div id="liveFeed">
-        <a class="twitter-timeline" data-lang="id" data-theme="light" data-height="640" data-chrome="nofooter noborders" href="https://twitter.com/Nala_JKT48?ref_src=twsrc%5Etfw">Tweet terbaru @Nala_JKT48</a>
-      </div>
-      <p id="liveStatus" role="status" style="margin:10px 0 0;font-size:12px;color:var(--muted);font-weight:600">Scroll ke sini buat muat update terbaru Nala…</p>
-      <p style="margin:6px 0 0;font-size:12px;color:var(--muted);font-weight:600">Tidak tampil? <button id="liveRetry" class="report-link" type="button" hidden>Coba lagi</button> <a href="https://x.com/Nala_JKT48" target="_blank" rel="noopener noreferrer" style="color:var(--field);font-weight:800">Buka langsung di X ↗</a></p>
-    </div>
-  </div>
-</section>
-<script>
-(function(){
-  const sec=document.getElementById("live");
-  if(!sec) return;
-  let started=false, scriptAdded=false;
-  const statusEl=document.getElementById("liveStatus");
-  const retryBtn=document.getElementById("liveRetry");
-  function setStatus(msg, showRetry){
-    if(statusEl) statusEl.textContent=msg;
-    if(retryBtn) retryBtn.hidden=!showRetry;
-  }
-  function watchLive(){
-    let tries=0;
-    const iv=setInterval(()=>{
-      tries++;
-      if(document.querySelector("#liveFeed iframe")){ clearInterval(iv); setStatus("", false); return; }
-      if(tries>=8){ clearInterval(iv); setStatus("X lagi membatasi request (coba lagi beberapa menit lagi ya).", true); }
-    }, 1500);
-  }
-  function loadLive(){
-    if(started) return;
-    started=true;
-    setStatus("Memuat update terbaru Nala…", false);
-    if(window.twttr && window.twttr.widgets){ window.twttr.widgets.load(); watchLive(); return; }
-    if(scriptAdded){ watchLive(); return; }
-    scriptAdded=true;
-    const s=document.createElement("script");
-    s.src="https://platform.twitter.com/widgets.js"; s.async=true;
-    s.onload=()=>watchLive();
-    s.onerror=()=>setStatus("Belum bisa muat widget X — cek koneksi ya.", true);
-    document.body.appendChild(s);
-  }
-  if(retryBtn) retryBtn.addEventListener("click", ()=>{ started=false; loadLive(); });
-  if("IntersectionObserver" in window){
-    const ob=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ ob.disconnect(); loadLive(); } }); }, {rootMargin:"400px"});
-    ob.observe(sec);
-  } else {
-    loadLive();
-  }
-})();
-</script>
 
 <!-- TOOLBAR -->
 <div class="toolbar" role="search" aria-label="Pencarian dan filter">

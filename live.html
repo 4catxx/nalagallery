@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Nala's Gallery — Live Nala</title>
+<meta name="description" content="Update terbaru Nala langsung dari X — fanmade, bukan akun resmi JKT48.">
+<link rel="stylesheet" href="styles.css?v=20260904b">
+</head>
+<body>
+<a class="skip" href="#main">Lewati ke konten</a>
+<div class="canvas-grain" aria-hidden="true"></div>
+
+<header class="site-head" role="banner">
+  <a class="brand" href="index.html" aria-label="Nala's Gallery — kembali ke galeri">
+    <span class="brand-type">
+      <b>Nala's Gallery</b>
+      <span>Shabilqis Naila — JKT48 <em>· fanmade · bukan resmi</em></span>
+    </span>
+  </a>
+  <nav class="head-nav" aria-label="Navigasi utama">
+    <a class="ghost" href="index.html#galeri">← Kembali ke galeri</a>
+    <a class="primary" href="upload.html">Kirim tautan</a>
+  </nav>
+  <span class="meta-counter" aria-hidden="true">#SeniNala · Nalania</span>
+</header>
+
+<main id="main" class="shell" role="main" style="padding-top:18px">
+  <p style="margin:0 0 12px"><a class="btn ghost" href="index.html" style="background:var(--paper)">← Kembali ke galeri</a> <span style="font-size:12px;color:var(--muted);font-weight:600;margin-left:8px">Hai-hai! Update Nala tinggal di sini — galeri cantiknya tetap di <a href="index.html#galeri" style="color:var(--field);font-weight:800">galeri</a> ya, semangat!</span></p>
+
+  <!-- LIVE DARI NALA — timeline X resmi (embed publish.twitter.com, tanpa kunci) -->
+  <section id="live" aria-labelledby="live-title">
+    <div class="section-head" style="margin-bottom:14px">
+      <h2 id="live-title"><span>Roar! Langsung dari X</span>Live Nala</h2>
+      <p>Postingan terbaru Nala apa adanya dari X — yang ada fotonya bisa dikirim ke galeri lewat <a href="upload.html" style="color:var(--field);font-weight:800">Kirim tautan</a> biar dikurasi Nalania.</p>
+    </div>
+    <div class="panel" style="overflow:hidden">
+      <div class="panel-body">
+        <div id="liveFeed">
+          <a class="twitter-timeline" data-lang="id" data-theme="light" data-height="640" data-chrome="nofooter noborders" href="https://twitter.com/Nala_JKT48?ref_src=twsrc%5Etfw">Tweet terbaru @Nala_JKT48</a>
+        </div>
+        <p id="liveStatus" role="status" style="margin:10px 0 0;font-size:12px;color:var(--muted);font-weight:600">Memuat update terbaru Nala…</p>
+        <p style="margin:6px 0 0;font-size:12px;color:var(--muted);font-weight:600">Tidak tampil? <button id="liveRetry" class="report-link" type="button" hidden>Coba lagi</button> <a href="https://x.com/Nala_JKT48" target="_blank" rel="noopener noreferrer" style="color:var(--field);font-weight:800">Buka langsung di X ↗</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot" role="contentinfo">
+  <div class="foot-inner">
+    <div>
+      <h4>Nala's Gallery — Fanmade · #SeniNala</h4>
+      <p>Hai-hai! Dibuat dengan cinta oleh penggemar untuk penggemar Shabilqis Naila (Nala) JKT48 — <b>Dititipkan penuh cinta oleh Nalania</b>. <b>Fanmade — tidak terafiliasi resmi dengan JKT48 atau agensi mana pun ya.</b> Semua kredit fotografer tetap tampil utuh lewat tautan sumber kok. Unduh HD baru narik file asli pas kamu minta aja. Kurasi mingguan #SeniNala — seni itu art, tetap semangat!</p>
+      <p style="margin-top:10px"><span class="foot-badge" style="background:var(--accent)">#SeniNala · Nalania</span></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const sec=document.getElementById("live");
+  if(!sec) return;
+  let started=false, scriptAdded=false;
+  const statusEl=document.getElementById("liveStatus");
+  const retryBtn=document.getElementById("liveRetry");
+  function setStatus(msg, showRetry){
+    if(statusEl) statusEl.textContent=msg;
+    if(retryBtn) retryBtn.hidden=!showRetry;
+  }
+  function watchLive(){
+    let tries=0;
+    const iv=setInterval(()=>{
+      tries++;
+      if(document.querySelector("#liveFeed iframe")){ clearInterval(iv); setStatus("", false); return; }
+      if(tries>=8){ clearInterval(iv); setStatus("X lagi membatasi request (coba lagi beberapa menit lagi ya).", true); }
+    }, 1500);
+  }
+  function loadLive(){
+    if(started) return;
+    started=true;
+    setStatus("Memuat update terbaru Nala…", false);
+    if(window.twttr && window.twttr.widgets){ window.twttr.widgets.load(); watchLive(); return; }
+    if(scriptAdded){ watchLive(); return; }
+    scriptAdded=true;
+    const s=document.createElement("script");
+    s.src="https://platform.twitter.com/widgets.js"; s.async=true;
+    s.onload=()=>watchLive();
+    s.onerror=()=>setStatus("Belum bisa muat widget X — cek koneksi ya.", true);
+    document.body.appendChild(s);
+  }
+  if(retryBtn) retryBtn.addEventListener("click", ()=>{ started=false; loadLive(); });
+  if("IntersectionObserver" in window){
+    const ob=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ ob.disconnect(); loadLive(); } }); }, {rootMargin:"400px"});
+    ob.observe(sec);
+  } else {
+    loadLive();
+  }
+})();
+</script>
+</body>
+</html>
