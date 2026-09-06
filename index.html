@@ -227,7 +227,8 @@ function mapTweetRow(row){
     palette: handleClean==="Nala_JKT48" ? ["#0E7C86","#E2F2EF"] : ["#0E7C86","#E2F2EF","#FFFBF2"],
     photos: photosArr,
     report_count: row.report_count||0,
-    reportCount: row.report_count||0
+    reportCount: row.report_count||0,
+    avatar: row.avatar_url||""
   };
 }
 function renderGalleryLoading(){
@@ -761,10 +762,10 @@ function getPhotographers(){
     if(!key) return;
     const nPhotos = p.photos ? p.photos.length : 1;
     const existing=map.get(key);
-    if(existing){ existing.count += nPhotos; existing.tweets += 1; }
+    if(existing){ existing.count += nPhotos; existing.tweets += 1; if(!existing.avatar && p.avatar) existing.avatar=p.avatar; }
     else {
       const isNala = key==="Nala_JKT48";
-      map.set(key, {handle:key, displayName:p.photographer, count:nPhotos, tweets:1, isNala});
+      map.set(key, {handle:key, displayName:p.photographer, count:nPhotos, tweets:1, isNala, avatar:p.avatar||""});
     }
   });
   const arr=[...map.values()];
@@ -792,8 +793,9 @@ function renderPhotographers(){
     card.setAttribute("role","listitem");
     card.setAttribute("aria-label",`Lihat foto-foto kece oleh ${entry.displayName} @${entry.handle} — ${entry.count} foto, yuk!`);
     const initials=entry.displayName.trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join("").slice(0,2) || entry.handle.slice(0,2).toUpperCase();
+    const avatarInner=entry.avatar ? `<img src="${esc(entry.avatar)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:999px;display:block" onerror="this.remove()">` : esc(initials);
     card.innerHTML=`
-      <span class="photographer-avatar" aria-hidden="true">${esc(initials)}</span>
+      <span class="photographer-avatar" aria-hidden="true">${avatarInner}</span>
       <span class="photographer-info">
         <span class="photographer-name">${esc(entry.displayName)}</span>
         <span class="photographer-handle"><a href="https://x.com/${esc(entry.handle)}" target="_blank" rel="noopener noreferrer" tabindex="-1" onclick="event.stopPropagation()">@${esc(entry.handle)}</a></span>
@@ -972,7 +974,7 @@ function buildViewerPhoto(p, idx, photoIdx){
       </div>` : ``}
       <div class="frame-bar">
         <div>
-          <div class="author">${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``} <span style="font-weight:600;color:var(--muted)">· ${esc(p.era)}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${p.isReal ? (p.badge ? `<span style="background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">${esc(p.badge)}</span>` : ``) : `<span style="background:var(--paper);color:var(--muted);border:1px solid var(--line);padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">SINTETIS</span>`} <span class="meta-pill curated-pill" style="margin-left:6px">Dikurasi ${esc(p.curatedAt||"—")}</span></div>
+          <div class="author">${p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy" style="width:18px;height:18px;border-radius:999px;object-fit:cover;vertical-align:-4px;margin-right:4px" onerror="this.remove()">` : ``}${esc(p.photographer)}${p.handle ? ` @${esc(p.handle)}` : ``} <span style="font-weight:600;color:var(--muted)">· ${esc(p.era)}${p.date ? ` · ${esc(p.date)}` : ``}</span> ${p.isReal ? (p.badge ? `<span style="background:${p.badge==='DARI NALA' ? `var(--field)` : `var(--paper)`};color:${p.badge==='DARI NALA' ? `var(--paper)` : `var(--muted)`};border:1px solid ${p.badge==='DARI NALA' ? `var(--field)` : `var(--line)`};padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">${esc(p.badge)}</span>` : ``) : `<span style="background:var(--paper);color:var(--muted);border:1px solid var(--line);padding:2px 6px;border-radius:999px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-left:6px">SINTETIS</span>`} <span class="meta-pill curated-pill" style="margin-left:6px">Dikurasi ${esc(p.curatedAt||"—")}</span></div>
           <div class="caption">${esc(p.caption)}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">

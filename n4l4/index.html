@@ -293,6 +293,50 @@ function extractPhotoUrls(data){
   });
   return uniq.slice(0,4);
 }
+const draftMeta = new Map();
+function pickFirst(){
+  for(let i=0;i<arguments.length;i++){
+    const v=arguments[i];
+    if(typeof v==="string" && v.trim()) return v.trim();
+  }
+  return "";
+}
+function extractMeta(data){
+  const tw = (data && data.tweet && typeof data.tweet==="object") ? data.tweet : {};
+  const au = (tw.author && typeof tw.author==="object") ? tw.author : ((data && data.author && typeof data.author==="object") ? data.author : {});
+  const text = pickFirst(tw.text, tw.full_text, data.text);
+  const name = pickFirst(au.name, au.display_name);
+  const screen = pickFirst(au.screen_name, au.username, au.handle).replace(/^@/,"");
+  let avatar = pickFirst(au.avatar_url, au.profile_image_url_https, au.profile_image_url);
+  if(avatar && /_normal(\.\w+)(\?.*)?$/.test(avatar)) avatar = avatar.replace(/_normal(\.\w+)(\?.*)?$/, "_400x400$1$2");
+  let tweetDate = "";
+  const created = pickFirst(tw.created_at, data.created_at);
+  if(created){
+    const d = new Date(created);
+    if(!isNaN(d)) tweetDate = d.toISOString().slice(0,10);
+  }
+  if(!text && !name && !avatar && !tweetDate) return null;
+  return { caption:text, author:name, handle:screen, avatar:avatar, tweet_date:tweetDate };
+}
+function renderMetaPreview(id){
+  const key=String(id);
+  const strip=document.getElementById(`metaPreview-${key}`);
+  if(!strip) return;
+  const meta=draftMeta.get(key);
+  strip.innerHTML="";
+  if(!meta){
+    strip.innerHTML=`<span style="font-size:11px;color:var(--muted);font-weight:600">Caption & foto profil ikut ketarik otomatis — klik Ambil foto otomatis ya!</span>`;
+    return;
+  }
+  const label=(meta.author||meta.handle||"NA").slice(0,2).toUpperCase();
+  const av=meta.avatar
+    ? `<img src="${esc(meta.avatar)}" alt="Foto profil ${esc(meta.author||meta.handle||"author")}" loading="lazy" style="width:32px;height:32px;border-radius:999px;object-fit:cover;flex:none;border:1px solid var(--line)" onerror="this.style.display='none'">`
+    : `<span class="avatar" style="width:32px;height:32px;font-size:10px;flex:none" aria-hidden="true">${esc(label)}</span>`;
+  const who=esc(meta.author || (meta.handle ? "@"+meta.handle : "author"));
+  const cap=meta.caption ? esc(meta.caption.length>120 ? meta.caption.slice(0,120)+"…" : meta.caption) : "(caption kosong)";
+  const dt=meta.tweet_date ? ` · ${esc(meta.tweet_date)}` : "";
+  strip.innerHTML=`<div style="display:flex;gap:8px;align-items:flex-start">${av}<div style="font-size:11px;line-height:1.45;font-weight:600;min-width:0"><b>${who}</b><span style="color:var(--muted)">${dt}</span><br><span style="color:var(--muted)">${cap}</span></div></div>`;
+}
 async function autoFetchImages(id){
   const key=String(id);
   const item=pending.find(p=>String(p.id)===key);
@@ -314,12 +358,19 @@ async function autoFetchImages(id){
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     const urls=extractPhotoUrls(data);
-    if(!urls.length) throw new Error("no photos");
-    draftMap.set(key, urls);
-    renderImageRows(key);
-    renderImagePreview(key);
-    updateQueueMediaFor(key);
-    showToast(`Dapat ${urls.length} foto, cek ya!`, true);
+    const meta=extractMeta(data);
+    if(!urls.length && !meta) throw new Error("no photos");
+    if(urls.length){
+      draftMap.set(key, urls);
+      renderImageRows(key);
+      renderImagePreview(key);
+      updateQueueMediaFor(key);
+    }
+    if(meta){
+      draftMeta.set(key, meta);
+      renderMetaPreview(key);
+    }
+    showToast(urls.length ? `Dapat ${urls.length} foto${meta ? " + caption" : ""}, cek ya!` : "Caption ketarik — fotonya tempel manual ya!", true);
   }catch(err){
     clearTimeout(timeout);
     console.error("[Nala Admin] auto fetch gagal", err);
@@ -435,6 +486,7 @@ function mapPendingRow(row){
     tweetUrl: row.url,
     era: row.tweet_date ? `Era ${new Date(row.tweet_date).getFullYear()}` : "Era —",
     photos: photosArr,
+    avatar: row.avatar_url||"",
     created_at: row.created_at,
     status: row.status
   };
@@ -820,6 +872,7 @@ function renderQueue(){
             <label style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:900;color:var(--ink-2)">Foto (opsional, 1–4 URL gambar — ambil otomatis atau tempel manual, semangat!)</label>
             <div class="admin-image-rows" id="imageRows-${esc(item.id)}" style="display:grid;gap:6px"></div>
             <div class="admin-image-preview-strip" id="imagePreview-${esc(item.id)}" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:44px;align-content:start"></div>
+            <div class="admin-meta-preview" id="metaPreview-${esc(item.id)}" style="border:1px dashed var(--line);border-radius:12px;padding:8px;background:var(--paper-2)"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <button class="btn small" type="button" data-add-image="${esc(item.id)}">+ Tambah baris</button>
               <button class="btn small" type="button" data-auto-fetch="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Ambil foto otomatis · Roar!</button>
@@ -840,6 +893,7 @@ function renderQueue(){
     pending.forEach(item=>{
       renderImageRows(item.id);
       renderImagePreview(item.id);
+      renderMetaPreview(item.id);
     });
     q.querySelectorAll("[data-add-image]").forEach(b=>{
       b.addEventListener("click", ()=>{
@@ -891,13 +945,22 @@ async function approve(id){
     }
   }
   try{
+    const patch={ status:"approved", curated_at: today };
+    const meta=draftMeta.get(String(id));
+    if(meta){
+      if(meta.caption) patch.caption=meta.caption;
+      if(meta.author) patch.author=meta.author;
+      if(meta.avatar) patch.avatar_url=meta.avatar;
+      if(meta.tweet_date) patch.tweet_date=meta.tweet_date;
+    }
     const res=await fetch(`${SUPABASE_URL}/rest/v1/tweets?id=eq.${encodeURIComponent(id)}`, {
       method:"PATCH",
       headers:{ ...authHeaders(), "Content-Type":"application/json", Prefer:"return=representation" },
-      body: JSON.stringify({ status:"approved", curated_at: today })
+      body: JSON.stringify(patch)
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     draftMap.delete(String(id));
+    draftMeta.delete(String(id));
     pending = pending.filter(p=>String(p.id)!==String(id));
     renderQueue();
     fetchApprovedCount();
@@ -920,6 +983,7 @@ async function reject(id){
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     pending = pending.filter(p=>String(p.id)!==String(id));
     draftMap.delete(String(id));
+    draftMeta.delete(String(id));
     renderQueue();
     fetchRejected();
     switchTab("rejected");
