@@ -173,6 +173,7 @@ let currentPage = 1;
 let activeFilters = {era:null, photographer:null, q:""};
 let viewerIndex = 0;
 let viewerPhotoIndex = 0; // in-tweet photo pager — distinct from tweet-level index
+let viewerBusy = false; // kunci transisi: cegah klik bertumpuk selama animasi geser
 let filtered = [...photos];
 let filteredSorted = [...photos];
 let visible = [];
@@ -862,20 +863,24 @@ function viewerKeys(e){
   if(e.key==="." || e.key===">") stepPhoto(1);
 }
 function stepViewer(dir){
+  if(viewerBusy) return;
   const n = visible.length;
   if(n===0) return;
+  viewerBusy=true;
+  setTimeout(()=>{ viewerBusy=false; }, 320);
   const next = (viewerIndex + dir + n) % n;
-  const outClass = dir>0 ? "exit-left" : "enter-right";
+  const outClass = dir>0 ? "exit-left" : "exit-right";
+  const inClass = dir>0 ? "enter-right" : "enter-left";
   const track = $("#viewerTrack");
   const cur = track.querySelector(".viewer-photo.active");
   if(cur){ cur.classList.remove("active"); cur.classList.add(outClass); setTimeout(()=>cur.remove(), 520); }
   viewerIndex = next;
   viewerPhotoIndex = 0;
   const incoming = buildViewerPhoto(visible[viewerIndex], viewerIndex, viewerPhotoIndex);
-  incoming.classList.add("enter-right");
+  incoming.classList.add(inClass);
   track.appendChild(incoming);
   requestAnimationFrame(()=> requestAnimationFrame(()=>{
-    incoming.classList.remove("enter-right");
+    incoming.classList.remove(inClass);
     incoming.classList.add("active");
     updateViewerChrome();
     preloadViewerTweet(viewerIndex);
@@ -884,7 +889,7 @@ function stepViewer(dir){
   }));
   if(cur) setTimeout(()=>{ if(cur.parentNode) cur.remove(); }, 600);
   if(!cur){
-    incoming.classList.remove("enter-right");
+    incoming.classList.remove(inClass);
     incoming.classList.add("active");
     updateViewerChrome();
     preloadViewerTweet(viewerIndex);
