@@ -716,7 +716,7 @@ function renderRejected(){
     const row=document.createElement("div");
     row.className="notice";
     row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
-    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-rejected="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Pulihkan</button><button class="btn small" type="button" data-delete-rejected="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
+    row.innerHTML=`${rowThumbs(item)}<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-rejected="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Pulihkan</button><button class="btn small" type="button" data-delete-rejected="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
     list.appendChild(row);
   });
   list.querySelectorAll("[data-restore-rejected]").forEach(b=> b.addEventListener("click", ()=> restoreRejected(b.getAttribute("data-restore-rejected"), b)));
@@ -845,7 +845,7 @@ function renderArsip(){
     const row=document.createElement("div");
     row.className="notice";
     row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
-    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span> <span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-arsip="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Kembalikan</button><button class="btn small" type="button" data-delete-arsip="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
+    row.innerHTML=`${rowThumbs(item)}<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span> <span class="meta-pill" style="background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:10px">ARSIP</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-restore-arsip="${esc(item.id)}" style="background:var(--field);color:var(--paper);border-color:var(--field)">Kembalikan</button><button class="btn small" type="button" data-delete-arsip="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
     list.appendChild(row);
   });
   list.querySelectorAll("[data-restore-arsip]").forEach(b=> b.addEventListener("click", ()=> restoreArsip(b.getAttribute("data-restore-arsip"), b)));
@@ -906,6 +906,17 @@ async function deleteArsip(id, btn){
     if(btn){ btn.disabled=false; btn.textContent=prevText; }
   }
 }
+function rowThumbs(item){
+  const arr=((item&&item.photos)||[]).filter(ph=>ph && (ph.image_url_large||ph.image_url_orig));
+  if(!arr.length) return `<span class="meta-pill" style="font-size:10px;white-space:nowrap">tanpa foto</span>`;
+  const shown=arr.slice(0,3).map(ph=>{
+    const src=ph.image_url_large||ph.image_url_orig;
+    if(!safeHttpUrl(src)) return "";
+    return `<img src="${esc(src)}" alt="" loading="lazy" style="width:48px;height:48px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:var(--paper);flex:none" onerror="this.remove()">`;
+  }).join("");
+  const extra=arr.length>3 ? `<span class="meta-pill" style="font-size:10px;white-space:nowrap">+${arr.length-3}</span>` : ``;
+  return `<span style="display:flex;gap:6px;align-items:center;flex:none" aria-hidden="true">${shown}${extra}</span>`;
+}
 async function fetchGalleryAdmin(){
   const list=$("#galleryList");
   try{
@@ -936,7 +947,7 @@ function renderGalleryAdmin(){
     const row=document.createElement("div");
     row.className="notice";
     row.style.cssText="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:11px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap";
-    row.innerHTML=`<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-archive-live="${esc(item.id)}">Arsipkan</button><button class="btn small" type="button" data-delete-live="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
+    row.innerHTML=`${rowThumbs(item)}<span style="flex:1;min-width:200px"><b>${esc(item.photographer)}</b> · <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">${esc(item.era)} · ${nPhotos} foto</span><br>${safeHttpUrl(item.tweetUrl) ? `<a href="${esc(item.tweetUrl)}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;color:var(--muted)">${esc(item.tweetUrl)}</a>` : `<span style="word-break:break-all;color:var(--field);font-weight:800">${esc(item.tweetUrl)} (tidak valid)</span>`}</span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn small" type="button" data-archive-live="${esc(item.id)}">Arsipkan</button><button class="btn small" type="button" data-delete-live="${esc(item.id)}" style="background:var(--paper)">Hapus permanen</button></span>`;
     list.appendChild(row);
   });
   list.querySelectorAll("[data-archive-live]").forEach(b=> b.addEventListener("click", ()=> archiveGalleryTweet(b.getAttribute("data-archive-live"), b)));
