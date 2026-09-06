@@ -243,10 +243,10 @@ async function fetchGallery(){
   galleryLoadError = false;
   renderGalleryLoading();
   try{
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&order=tweet_date.desc.nullslast&select=*,photos(*)`, { headers: { apikey: SUPABASE_ANON_KEY, Accept: "application/json" } });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tweets?status=eq.approved&is_dead=eq.false&order=tweet_date.desc.nullslast&select=*,photos(*)`, { headers: { apikey: SUPABASE_ANON_KEY, Accept: "application/json" } });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
-    photos = (rows||[]).map(mapTweetRow);
+    photos = (rows||[]).filter(r=>!r.is_dead).map(mapTweetRow);
   }catch(err){
     console.error("[Nala Gallery] gagal memuat galeri", err);
     galleryLoadError = true;
