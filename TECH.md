@@ -69,8 +69,9 @@ banyak`; antrean 6 kartu dulu (berat). Hapus permanen selalu lewat dialog
 konfirmasi custom (bukan `confirm()` browser). Sesi kedaluwarsa (401)
 otomatis kembali ke login.
 
-**Share** — salin URL worker per UUID tweet. Crawler dapat caption +
-fotografer + foto; manusia diarahkan ke `/#galeri`. Hanya tweet
+**Share** — tombol `Salin tautan` di viewer menyalin URL worker per UUID
+tweet; galeri membuka foto tepat via hash `#foto=<uuid>`. Crawler dapat caption +
+fotografer + foto; manusia diarahkan ke foto yang sama. Hanya tweet
 approved & hidup yang ber-meta; sisanya fallback generik.
 
 **Live** — `live.html` menanam timeline X resmi (lazy-load saat di-scroll,

@@ -162,6 +162,7 @@ unreviewed and undocumented is unfinished; this build ends with the finish revie
 
 <script>
 const SUPABASE_URL = "https://giaoisdecffzmeoixxzs.supabase.co";
+const SHARE_BASE = "https://nala-foto.muhammadadhi2803.workers.dev";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpYW9pc2RlY2Zmem1lb2l4eHpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTY3MzksImV4cCI6MjEwNDA5MjczOX0.uw6UBD0W4ieQYObgEA5G2u7HhzouSLHO4Eql9KhgmSQ";
 // MODEL: tweet-as-unit — each item gains a `photos` array; existing single-photo logic keeps working with 1-entry arrays.
 // Real data R1-R3 knowledge remains DOCUMENTED elsewhere; in-code collection is now empty to show only real photos (none supplied yet → honest empty state).
@@ -259,6 +260,7 @@ async function fetchGallery(){
     applyFilters();
     renderPhotographers();
     renderSpotlight();
+    handleDeepLink();
   }
 }
 function parseDate(str){
@@ -826,6 +828,30 @@ function renderPhotographers(){
   });
   ceriaRevealBatch(ceriaPhotoNodes);
 }
+function openPhotoById(id){
+  const sid=String(id||"");
+  if(!sid || !photos.length) return false;
+  const tIdx=photos.findIndex(p=>String(p.id)===sid);
+  if(tIdx<0) return false;
+  resetFilters();
+  const vIdx0=filteredSorted.findIndex(p=>String(p.id)===sid);
+  if(vIdx0<0) return false;
+  const needPage=Math.floor(vIdx0/PAGE_SIZE)+1;
+  while(currentPage<needPage){
+    currentPage++;
+    visible=filteredSorted.slice(0, currentPage*PAGE_SIZE);
+  }
+  renderGrid(); updateMeta(); updateStats(); syncChips(); updateLoadMore();
+  const vi=visible.findIndex(p=>String(p.id)===sid);
+  if(vi<0) return false;
+  openViewer(vi);
+  return true;
+}
+function handleDeepLink(){
+  const m=String(location.hash||"").match(/foto=([0-9a-fA-F-]{8,})/);
+  if(m) openPhotoById(m[1]);
+}
+window.addEventListener("hashchange", handleDeepLink);
 function openViewer(realIdx){
   viewerIndex = realIdx;
   viewerPhotoIndex = 0;
@@ -1014,7 +1040,7 @@ function buildViewerPhoto(p, idx, photoIdx){
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           ${safeHttpUrl(p.tweetUrl) ? `<a class="link" href="${esc(p.tweetUrl)}" target="_blank" rel="noopener noreferrer">${p.deleted ? "Sumber mati — lihat cuplikan ya" : "Buka sumber asli ya"} ↗</a>` : `<span class="link" aria-disabled="true">Tautan sumber tidak valid</span>`}
-           ${p.deleted ? `` : `<button class="report-link" data-report-viewer="${p.id}" ${hasReported(p.id) ? `disabled` : ``}>${hasReported(p.id) ? `Sudah dilaporkan, makasih ya!` : `Laporkan link mati`}</button>`}
+            ${p.deleted ? `` : `<button class="report-link" data-share-viewer="${p.id}">Salin tautan</button><button class="report-link" data-report-viewer="${p.id}" ${hasReported(p.id) ? `disabled` : ``}>${hasReported(p.id) ? `Sudah dilaporkan, makasih ya!` : `Laporkan link mati`}</button>`}
         </div>
       </div>
     </div>
@@ -1068,6 +1094,23 @@ function updateViewerChrome(){
         renderViewer();
       }
     });
+  }
+  const shBtn=scopeNode.querySelector("[data-share-viewer]");
+  if(shBtn){
+    shBtn.onclick=async ()=>{
+      const url=`${SHARE_BASE}/${shBtn.getAttribute("data-share-viewer")}`;
+      try{
+        await navigator.clipboard.writeText(url);
+      }catch(_){
+        const ta=document.createElement("textarea");
+        ta.value=url; ta.setAttribute("readonly","");
+        ta.style.cssText="position:fixed;opacity:0";
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand("copy"); }catch(_2){}
+        ta.remove();
+      }
+      showToast("Tautan foto disalin — sebar yuk, Roar!");
+    };
   }
   // re-bind photo nav after chrome update — scoped to active node (ids repeat during transitions)
   const pv = scopeNode.querySelector("#photoPrev");
